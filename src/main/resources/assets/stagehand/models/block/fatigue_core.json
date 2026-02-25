@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "stagehand:block/fatigue_core_top",
+    "side": "stagehand:block/fatigue_core_front"
+  }
+}

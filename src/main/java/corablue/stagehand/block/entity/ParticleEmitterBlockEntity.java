@@ -1,0 +1,295 @@
+package corablue.stagehand.block.entity;
+
+import corablue.stagehand.block.custom.ParticleEmitterBlock;
+import corablue.stagehand.client.particle.OmniParticleEffect;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
+
+public class ParticleEmitterBlockEntity extends BlockEntity {
+
+    // --- Settings / Default Values ---
+    private UUID owner = null;
+    private boolean isActive = true;
+    private Identifier particleType = Identifier.of("stagehand", "omni_spark");
+
+    // Colors
+    private float c1R = 1.0f; private float c1G = 1.0f; private float c1B = 1.0f;
+    private float c2R = 1.0f; private float c2G = 1.0f; private float c2B = 1.0f;
+
+    // Spawning Area & Offsets
+    private float offsetX = 0.0f; private float offsetY = 0.5f; private float offsetZ = 0.0f;
+    private float areaX = 0.5f; private float areaY = 0.5f; private float areaZ = 0.5f;
+
+    // Behavior
+    private int amountPerTick = 1;
+    private int lifetime = 40;
+    private float scale = 1.0f;
+    private float gravity = 0.0f;
+
+    // Velocity Ranges
+    private float minVelX = -0.05f; private float maxVelX = 0.05f;
+    private float minVelY = 0.02f;  private float maxVelY = 0.08f;
+    private float minVelZ = -0.05f; private float maxVelZ = 0.05f;
+
+    public ParticleEmitterBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.PARTICLE_EMITTER_BE, pos, state);
+    }
+
+    // --- Getters ---
+    public Identifier getParticleType() { return this.particleType; }
+    public float getC1R() { return this.c1R; } public float getC1G() { return this.c1G; } public float getC1B() { return this.c1B; }
+    public float getC2R() { return this.c2R; } public float getC2G() { return this.c2G; } public float getC2B() { return this.c2B; }
+
+    public float getOffsetX() { return this.offsetX; } public float getOffsetY() { return this.offsetY; } public float getOffsetZ() { return this.offsetZ; }
+    public float getAreaX() { return this.areaX; } public float getAreaY() { return this.areaY; } public float getAreaZ() { return this.areaZ; }
+    public float getMinVelX() { return this.minVelX; } public float getMaxVelX() { return this.maxVelX; }
+    public float getMinVelY() { return this.minVelY; } public float getMaxVelY() { return this.maxVelY; }
+    public float getMinVelZ() { return this.minVelZ; } public float getMaxVelZ() { return this.maxVelZ; }
+
+    public float getScale() { return this.scale; }
+    public float getGravity() { return this.gravity; }
+    public int getAmountPerTick() { return this.amountPerTick; }
+    public int getLifetime() { return this.lifetime; }
+
+    // --- Security ---
+    public void setOwner(UUID uuid) {
+        this.owner = uuid;
+        this.markDirtyAndSync();
+    }
+    public boolean isOwner(PlayerEntity player) {
+        return this.owner != null && this.owner.equals(player.getUuid());
+    }
+
+    // --- Client Tick ---
+    public static void clientTick(World world, BlockPos pos, BlockState state, ParticleEmitterBlockEntity be) {
+
+        // ==========================================
+        // 1. DECORATIVE HOLOGRAM (Smooth + Sine Wave)
+        // ==========================================
+        ParticleType<?> rawDotType = Registries.PARTICLE_TYPE.get(Identifier.of("stagehand", "omni_dot_dir"));
+        if (rawDotType != null) {
+            @SuppressWarnings("unchecked")
+            ParticleType<OmniParticleEffect> omniDotType = (ParticleType<OmniParticleEffect>) rawDotType;
+
+            double radius = 0.25;
+            double orbitSpeed = 0.1;
+
+            // This is the distance "out" from the center of the block
+            double baseForwardOffset = 0.3;
+
+            // Sine Wave variables
+            double sineSpeed = 0.1;
+            double sineAmplitude = 0.1;
+
+            long time = world.getTime();
+
+            // 1. Get the Facing Direction
+            Direction facing = state.get(ParticleEmitterBlock.FACING);
+
+            for (int i = 0; i < 3; i++) {
+                double offset = i * (2 * Math.PI / 3);
+
+                // --- CALCULATE LOCAL OFFSETS ---
+                // Local Y = The axis sticking OUT of the block (Forward)
+                // Local X/Z = The ring plane
+
+                // Current Tick
+                double curAngle = (time * orbitSpeed) + offset;
+                double localX = Math.cos(curAngle) * radius;
+                double localY = baseForwardOffset + (Math.sin(time * sineSpeed) * sineAmplitude);
+                double localZ = Math.sin(curAngle) * radius;
+
+                // Next Tick (for velocity)
+                double nextAngle = ((time + 1) * orbitSpeed) + offset;
+                double nextLocalX = Math.cos(nextAngle) * radius;
+                double nextLocalY = baseForwardOffset + (Math.sin((time + 1) * sineSpeed) * sineAmplitude);
+                double nextLocalZ = Math.sin(nextAngle) * radius;
+
+                // --- ROTATE TO WORLD SPACE ---
+                // Helper method to rotate the vector (localX, localY, localZ) based on facing
+                // We add 0.5 to center it in the block
+
+                double[] curPos = rotateVector(localX, localY, localZ, facing);
+                double curWorldX = pos.getX() + 0.5 + curPos[0];
+                double curWorldY = pos.getY() + 0.5 + curPos[1];
+                double curWorldZ = pos.getZ() + 0.5 + curPos[2];
+
+                double[] nextPos = rotateVector(nextLocalX, nextLocalY, nextLocalZ, facing);
+                double nextWorldX = pos.getX() + 0.5 + nextPos[0];
+                double nextWorldY = pos.getY() + 0.5 + nextPos[1];
+                double nextWorldZ = pos.getZ() + 0.5 + nextPos[2];
+
+                // --- CALCULATE VELOCITY ---
+                double velX = nextWorldX - curWorldX;
+                double velY = nextWorldY - curWorldY;
+                double velZ = nextWorldZ - curWorldZ;
+
+                OmniParticleEffect hologramEffect = new OmniParticleEffect(omniDotType, 0.0f, 1.0f, 1.0f, 0.25f, 0.0f, 2);
+                world.addParticle(hologramEffect, curWorldX, curWorldY, curWorldZ, velX, velY, velZ);
+            }
+        }
+
+        // ==========================================
+        // 2. FUNCTIONAL EMITTER (Respects Redstone & Settings)
+        // ==========================================
+
+        if (!be.isActive || state.get(ParticleEmitterBlock.POWERED)) return;
+
+        ParticleType<?> rawType = Registries.PARTICLE_TYPE.get(be.particleType);
+        if (rawType == null) return;
+
+        @SuppressWarnings("unchecked")
+        ParticleType<OmniParticleEffect> omniType = (ParticleType<OmniParticleEffect>) rawType;
+
+        for (int i = 0; i < be.amountPerTick; i++) {
+            float lerpFactor = world.random.nextFloat();
+            float finalR = MathHelper.lerp(lerpFactor, be.c1R, be.c2R);
+            float finalG = MathHelper.lerp(lerpFactor, be.c1G, be.c2G);
+            float finalB = MathHelper.lerp(lerpFactor, be.c1B, be.c2B);
+
+            OmniParticleEffect effect = new OmniParticleEffect(omniType, finalR, finalG, finalB, be.scale, be.gravity, be.lifetime);
+
+            double spawnX = pos.getX() + 0.5 + be.offsetX + (world.random.nextGaussian() * be.areaX);
+            double spawnY = pos.getY() + 0.5 + be.offsetY + (world.random.nextGaussian() * be.areaY);
+            double spawnZ = pos.getZ() + 0.5 + be.offsetZ + (world.random.nextGaussian() * be.areaZ);
+
+            double velX = be.minVelX + world.random.nextDouble() * (be.maxVelX - be.minVelX);
+            double velY = be.minVelY + world.random.nextDouble() * (be.maxVelY - be.minVelY);
+            double velZ = be.minVelZ + world.random.nextDouble() * (be.maxVelZ - be.minVelZ);
+
+            world.addParticle(effect, spawnX, spawnY, spawnZ, velX, velY, velZ);
+        }
+    }
+
+    // --- Update Settings ---
+    public void updateSettings(
+            Identifier type,
+            float r1, float g1, float b1, float r2, float g2, float b2,
+            float scale, float gravity, int amount, int lifetime,
+            float oX, float oY, float oZ,
+            float aX, float aY, float aZ,
+            float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ
+    ) {
+        this.particleType = type;
+        this.c1R = r1; this.c1G = g1; this.c1B = b1;
+        this.c2R = r2; this.c2G = g2; this.c2B = b2;
+        this.scale = scale; this.gravity = gravity;
+        this.amountPerTick = amount; this.lifetime = lifetime;
+
+        this.offsetX = oX; this.offsetY = oY; this.offsetZ = oZ;
+        this.areaX = aX; this.areaY = aY; this.areaZ = aZ;
+
+        this.minVelX = minVX; this.maxVelX = maxVX;
+        this.minVelY = minVY; this.maxVelY = maxVY;
+        this.minVelZ = minVZ; this.maxVelZ = maxVZ;
+
+        this.markDirtyAndSync();
+    }
+
+    private static double[] rotateVector(double x, double y, double z, Direction facing) {
+        switch (facing) {
+            case UP:    return new double[]{ x,  y,  z}; // Y is Up
+            case DOWN:  return new double[]{ x, -y, -z}; // Y is Down
+            case NORTH: return new double[]{ x,  z, -y}; // Y is North (-Z)
+            case SOUTH: return new double[]{-x,  z,  y}; // Y is South (+Z)
+            case EAST:  return new double[]{ y,  z, -x}; // Y is East (+X)
+            case WEST:  return new double[]{-y,  z,  x}; // Y is West (-X)
+            default:    return new double[]{ x,  y,  z};
+        }
+    }
+
+    // --- NBT Saving & Loading ---
+    @Override
+    public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+        super.writeNbt(nbt, registryLookup);
+        if (this.owner != null) nbt.putUuid("Owner", this.owner);
+        nbt.putBoolean("IsActive", isActive);
+        nbt.putString("ParticleType", particleType.toString());
+
+        nbt.putFloat("C1R", c1R); nbt.putFloat("C1G", c1G); nbt.putFloat("C1B", c1B);
+        nbt.putFloat("C2R", c2R); nbt.putFloat("C2G", c2G); nbt.putFloat("C2B", c2B);
+
+        nbt.putFloat("OffsetX", offsetX); nbt.putFloat("OffsetY", offsetY); nbt.putFloat("OffsetZ", offsetZ);
+        nbt.putFloat("AreaX", areaX); nbt.putFloat("AreaY", areaY); nbt.putFloat("AreaZ", areaZ);
+
+        nbt.putInt("Amount", amountPerTick);
+        nbt.putInt("Lifetime", lifetime);
+        nbt.putFloat("Scale", scale);
+        nbt.putFloat("Gravity", gravity);
+
+        nbt.putFloat("MinVelX", minVelX); nbt.putFloat("MaxVelX", maxVelX);
+        nbt.putFloat("MinVelY", minVelY); nbt.putFloat("MaxVelY", maxVelY);
+        nbt.putFloat("MinVelZ", minVelZ); nbt.putFloat("MaxVelZ", maxVelZ);
+    }
+
+    @Override
+    public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+        super.readNbt(nbt, registryLookup);
+        if (nbt.contains("Owner")) this.owner = nbt.getUuid("Owner");
+        if (nbt.contains("IsActive")) this.isActive = nbt.getBoolean("IsActive");
+        if (nbt.contains("ParticleType")) this.particleType = Identifier.of(nbt.getString("ParticleType"));
+
+        if (nbt.contains("C1R")) this.c1R = nbt.getFloat("C1R");
+        if (nbt.contains("C1G")) this.c1G = nbt.getFloat("C1G");
+        if (nbt.contains("C1B")) this.c1B = nbt.getFloat("C1B");
+
+        if (nbt.contains("C2R")) this.c2R = nbt.getFloat("C2R");
+        if (nbt.contains("C2G")) this.c2G = nbt.getFloat("C2G");
+        if (nbt.contains("C2B")) this.c2B = nbt.getFloat("C2B");
+
+        if (nbt.contains("OffsetX")) this.offsetX = nbt.getFloat("OffsetX");
+        if (nbt.contains("OffsetY")) this.offsetY = nbt.getFloat("OffsetY");
+        if (nbt.contains("OffsetZ")) this.offsetZ = nbt.getFloat("OffsetZ");
+
+        if (nbt.contains("AreaX")) this.areaX = nbt.getFloat("AreaX");
+        if (nbt.contains("AreaY")) this.areaY = nbt.getFloat("AreaY");
+        if (nbt.contains("AreaZ")) this.areaZ = nbt.getFloat("AreaZ");
+
+        if (nbt.contains("Amount")) this.amountPerTick = nbt.getInt("Amount");
+        if (nbt.contains("Lifetime")) this.lifetime = nbt.getInt("Lifetime");
+        if (nbt.contains("Scale")) this.scale = nbt.getFloat("Scale");
+        if (nbt.contains("Gravity")) this.gravity = nbt.getFloat("Gravity");
+
+        if (nbt.contains("MinVelX")) this.minVelX = nbt.getFloat("MinVelX");
+        if (nbt.contains("MaxVelX")) this.maxVelX = nbt.getFloat("MaxVelX");
+        if (nbt.contains("MinVelY")) this.minVelY = nbt.getFloat("MinVelY");
+        if (nbt.contains("MaxVelY")) this.maxVelY = nbt.getFloat("MaxVelY");
+        if (nbt.contains("MinVelZ")) this.minVelZ = nbt.getFloat("MinVelZ");
+        if (nbt.contains("MaxVelZ")) this.maxVelZ = nbt.getFloat("MaxVelZ");
+    }
+
+    // --- Network Syncing ---
+    @Nullable
+    @Override
+    public Packet<ClientPlayPacketListener> toUpdatePacket() {
+        return BlockEntityUpdateS2CPacket.create(this);
+    }
+
+    @Override
+    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        return createNbt(registryLookup);
+    }
+
+    public void markDirtyAndSync() {
+        this.markDirty();
+        if (this.world != null && !this.world.isClient) {
+            this.world.updateListeners(this.pos, this.getCachedState(), this.getCachedState(), 3);
+        }
+    }
+}

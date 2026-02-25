@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": { "model": "stagehand:block/ambience_speaker" },
+    "facing=south": { "model": "stagehand:block/ambience_speaker", "y": 180 },
+    "facing=west":  { "model": "stagehand:block/ambience_speaker", "y": 270 },
+    "facing=east":  { "model": "stagehand:block/ambience_speaker", "y": 90 },
+    "facing=down":  { "model": "stagehand:block/ambience_speaker", "x": 90 },
+    "facing=up":    { "model": "stagehand:block/ambience_speaker", "x": -90 }
+  }
+}

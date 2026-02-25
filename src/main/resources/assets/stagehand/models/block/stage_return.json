@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "stagehand:block/stage_return_top",
+    "side": "stagehand:block/stage_return_front"
+  }
+}

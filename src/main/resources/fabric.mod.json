@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "stagehand",
+	"version": "${version}",
+	"name": "Stagehand",
+	"description": "A mod for build artists playing in survival multiplayer settings!",
+	"authors": [
+		"Corablue"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/stagehand/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"corablue.stagehand.Stagehand"
+		],
+		"fabric-datagen": [
+			"corablue.stagehand.StagehandDataGenerator"
+		],
+		"client": [
+			"corablue.stagehand.StagehandClient"
+		]
+	},
+	"mixins": [
+		"stagehand.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

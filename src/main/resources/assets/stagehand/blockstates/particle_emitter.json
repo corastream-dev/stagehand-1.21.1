@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=up":    { "model": "stagehand:block/particle_emitter" },
+    "facing=down":  { "model": "stagehand:block/particle_emitter", "x": 180 },
+    "facing=north": { "model": "stagehand:block/particle_emitter", "x": 90 },
+    "facing=south": { "model": "stagehand:block/particle_emitter", "x": 90, "y": 180 },
+    "facing=west":  { "model": "stagehand:block/particle_emitter", "x": 90, "y": 270 },
+    "facing=east":  { "model": "stagehand:block/particle_emitter", "x": 90, "y": 90 }
+  }
+}

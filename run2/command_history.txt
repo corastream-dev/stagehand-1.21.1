@@ -1,0 +1,2 @@
+/leavestage
+/gamemode survival

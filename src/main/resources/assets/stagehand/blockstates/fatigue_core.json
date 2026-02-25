@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "stagehand:block/fatigue_core"
+    }
+  }
+}

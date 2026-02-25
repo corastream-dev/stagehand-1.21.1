@@ -1,0 +1,179 @@
+{
+  "ambience_sparks": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_sparks"
+    ]
+  },
+  "ambience_crickets": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_crickets"
+    ]
+  },
+  "ambience_running_water": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_running_water"
+    ]
+  },
+  "ambience_wind": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_wind"
+    ]
+  },
+  "ambience_fireplace": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_fireplace"
+    ]
+  },
+  "ambience_boiling": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_boiling"
+    ]
+  },
+  "ambience_dripping": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_dripping"
+    ]
+  },
+  "ambience_forcefield": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_forcefield"
+    ]
+  },
+  "ambience_alarm": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_alarm"
+    ]
+  },
+  "ambience_clock": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_clock"
+    ]
+  },
+  "ambience_creaking_metal": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_creaking_metal"
+    ]
+  },
+  "ambience_crystals": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_crystals"
+    ]
+  },
+  "ambience_dischordant_angels": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_dischordant_angels"
+    ]
+  },
+  "ambience_jungle": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_jungle"
+    ]
+  },
+  "ambience_rain": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_rain"
+    ]
+  },
+  "ambience_sleepy": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_sleepy"
+    ]
+  },
+  "ambience_underwater": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_underwater"
+    ]
+  },
+  "ambience_wood_creaking": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_wood_creaking"
+    ]
+  },
+  "teleport_charge2": {
+    "category": "block",
+    "sounds": [
+      "stagehand:teleport_charge2"
+    ]
+  },
+
+  "teleport_fire": {
+    "category": "block",
+    "sounds": [
+      "stagehand:teleport_fire"
+    ]
+  },
+
+  "ambience_electric_hum": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_electric_hum"
+    ]
+  },
+
+  "ambience_industrial_hum": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_industrial_hum"
+    ]
+  },
+
+  "ambience_lava_cave": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_lava_cave"
+    ]
+  },
+
+  "ambience_room_drone": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_room_drone"
+    ]
+  },
+
+  "ambience_scifi_computers": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_scifi_computers"
+    ]
+  },
+
+  "ambience_scifi_engine": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_scifi_engine"
+    ]
+  },
+
+  "ambience_steam_engine": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_steam_engine"
+    ]
+  },
+
+  "ambience_steam_leak": {
+    "category": "ambient",
+    "sounds": [
+      "stagehand:ambience_steam_leak"
+    ]
+  }
+}

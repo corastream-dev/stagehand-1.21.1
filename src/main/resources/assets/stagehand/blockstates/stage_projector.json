@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "stagehand:block/stage_projector" }
+  }
+}

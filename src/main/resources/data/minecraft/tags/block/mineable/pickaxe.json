@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "stagehand:particle_emitter",
+    "stagehand:stage_projector",
+    "stagehand:ambience_speaker",
+    "stagehand:fatigue_core"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stagehand:particle_emitter",
+          "functions": [
+            {
+              "function": "minecraft:copy_custom_data",
+              "source": "block_entity",
+              "ops": [
+                { "source": "Owner", "target": "Owner", "op": "replace" },
+                { "source": "IsActive", "target": "IsActive", "op": "replace" },
+                { "source": "ParticleType", "target": "ParticleType", "op": "replace" },
+                { "source": "C1R", "target": "C1R", "op": "replace" },
+                { "source": "C1G", "target": "C1G", "op": "replace" },
+                { "source": "C1B", "target": "C1B", "op": "replace" },
+                { "source": "C2R", "target": "C2R", "op": "replace" },
+                { "source": "C2G", "target": "C2G", "op": "replace" },
+                { "source": "C2B", "target": "C2B", "op": "replace" },
+                { "source": "OffsetX", "target": "OffsetX", "op": "replace" },
+                { "source": "OffsetY", "target": "OffsetY", "op": "replace" },
+                { "source": "OffsetZ", "target": "OffsetZ", "op": "replace" },
+                { "source": "AreaX", "target": "AreaX", "op": "replace" },
+                { "source": "AreaY", "target": "AreaY", "op": "replace" },
+                { "source": "AreaZ", "target": "AreaZ", "op": "replace" },
+                { "source": "Amount", "target": "Amount", "op": "replace" },
+                { "source": "Lifetime", "target": "Lifetime", "op": "replace" },
+                { "source": "Scale", "target": "Scale", "op": "replace" },
+                { "source": "Gravity", "target": "Gravity", "op": "replace" },
+                { "source": "MinVelX", "target": "MinVelX", "op": "replace" },
+                { "source": "MaxVelX", "target": "MaxVelX", "op": "replace" },
+                { "source": "MinVelY", "target": "MinVelY", "op": "replace" },
+                { "source": "MaxVelY", "target": "MaxVelY", "op": "replace" },
+                { "source": "MinVelZ", "target": "MinVelZ", "op": "replace" },
+                { "source": "MaxVelZ", "target": "MaxVelZ", "op": "replace" }
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}
