@@ -3,6 +3,7 @@
 	"package": "corablue.stagehand.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"SafetyNetMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

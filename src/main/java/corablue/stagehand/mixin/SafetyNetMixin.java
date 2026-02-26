@@ -1,53 +1,50 @@
-/*
 package corablue.stagehand.mixin;
 
+import corablue.stagehand.network.FlashScreenPayload;
+import corablue.stagehand.sound.ModSounds;
 import corablue.stagehand.world.ModDimensions;
 import corablue.stagehand.world.StageReturnHandler;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public abstract class SafetyNetMixin {
 
-    @Shadow public abstract float getHealth();
-    @Shadow public abstract float getMaxHealth();
-
-    @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)
-    private void stagehand$interceptFatalDamage(DamageSource source, float amount, CallbackInfo ci) {
-
-        //If this is a player...
+    @Inject(method = "tryUseTotem", at = @At("HEAD"), cancellable = true)
+    private void stagehand$interceptDeath(DamageSource source, CallbackInfoReturnable<Boolean> cir) {
+        // 1. Check if this is a Player
         if ((Object) this instanceof ServerPlayerEntity player) {
 
-            //Are we are in The Stage?
+            // 2. Check if they are in The Stage
             if (player.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
 
-                //Check if this damage is fatal (Current Health - Final Damage <= 0)
-                if (this.getHealth() - amount <= 0) {
+                // 3. Attempt Rescue
+                // We use your existing handler. 
+                // Note: The handler MUST heal the player (setHealth) for this to work, 
+                // otherwise they will just die again in the next tick.
+                boolean rescued = StageReturnHandler.returnPlayer(player, StageReturnHandler.FallbackMode.RESPAWN_POINT);
 
-                    //Attempt Rescue
-                    boolean rescued = StageReturnHandler.returnPlayer(player, StageReturnHandler.FallbackMode.RESPAWN_POINT);
+                if (rescued) {
+                    // 4. Effects (Sound/Flash)
+                    player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                            ModSounds.TELEPORT_FIRE, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
-                    if (rescued) {
-                        //Heal them up so they don't arrive dead
-                        player.setHealth(this.getMaxHealth());
+                    ServerPlayNetworking.send(player, new FlashScreenPayload());
 
-                        //Sound and flash!
-                        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), corablue.stagehand.sound.ModSounds.TELEPORT_FIRE, net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f);
-                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new corablue.stagehand.network.FlashScreenPayload());
-
-                        //Don't waste totems!
-                        ci.cancel();
-                    }
+                    // 5. CRITICAL: Tell the game "We handled the death"
+                    // Returning 'true' makes the game think a Totem was used successfully,
+                    // so it stops the death process. 
+                    // Since we injected at HEAD, the vanilla code that consumes the item never runs.
+                    cir.setReturnValue(true);
                 }
             }
         }
     }
 }
-
- */
