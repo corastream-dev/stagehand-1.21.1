@@ -27,10 +27,13 @@ public class ModParticles {
     public static final ParticleType<OmniParticleEffect> OMNI_SPARK = registerBillboard("omni_spark", false);
     public static final ParticleType<OmniParticleEffect> OMNI_FOG = registerBillboard("omni_fog", false);
     public static final ParticleType<OmniParticleEffect> OMNI_DOT = registerBillboard("omni_dot", false);
+    public static final ParticleType<OmniParticleEffect> OMNI_HEART = registerBillboard("omni_heart", false);
+    public static final ParticleType<OmniParticleEffect> OMNI_SWIRL = registerBillboard("omni_swirl", false);
 
     // Use the new Directional method for rain, lasers, or falling debris!
     public static final ParticleType<OmniParticleEffect> OMNI_RAIN = registerDirectional("omni_rain", false);
     public static final ParticleType<OmniParticleEffect> OMNI_DOT_DIR = registerDirectional("omni_dot_dir", false);
+    public static final ParticleType<OmniParticleEffect> OMNI_FLAME = registerDirectional("omni_flame", false);
 
     // --- Helper Methods ---
     private static ParticleType<OmniParticleEffect> registerBillboard(String name, boolean alwaysShow) {
