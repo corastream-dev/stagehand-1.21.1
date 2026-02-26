@@ -1,19 +1,20 @@
 package corablue.stagehand.block.entity;
 
-import corablue.stagehand.world.StageManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.MinecraftServer;
+
+import net.minecraft.structure.StructurePlacementData;
+import net.minecraft.structure.StructureTemplate;
+import net.minecraft.structure.StructureTemplateManager;
+import net.minecraft.util.BlockMirror;
+import net.minecraft.util.BlockRotation;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-import corablue.stagehand.block.ModBlocks;
-import corablue.stagehand.world.ModDimensions;
-import net.minecraft.block.Blocks;
-import net.minecraft.server.world.ServerWorld;
-
+import java.util.Optional;
 import java.util.UUID;
 
 public class StageProjectorBlockEntity extends BlockEntity {
@@ -121,44 +122,37 @@ public class StageProjectorBlockEntity extends BlockEntity {
     }
 
     private void generatePlatform(net.minecraft.server.world.ServerWorld stageDimension, net.minecraft.util.math.BlockPos center) {
-        // 1. Build a 31x31 Stage FLUSH with the center Config Block (Y offset is now 0)
-        for (int x = -15; x <= 15; x++) {
-            for (int z = -15; z <= 15; z++) {
-                net.minecraft.util.math.BlockPos pos = center.add(x, 0, z); // Changed from -1 to 0
-                net.minecraft.block.BlockState state;
 
-                int absX = Math.abs(x);
-                int absZ = Math.abs(z);
+        //Structure manager
+        StructureTemplateManager manager = stageDimension.getStructureTemplateManager();
+        Identifier templateId = Identifier.of("stagehand", "stage_platform");
+        Optional<StructureTemplate> templateOptional = manager.getTemplate(templateId);
 
-                if (absX == 15 || absZ == 15) {
-                    state = (absX == 15 && absZ == 15) ?
-                            net.minecraft.block.Blocks.CHISELED_STONE_BRICKS.getDefaultState() : net.minecraft.block.Blocks.POLISHED_ANDESITE.getDefaultState();
-                } else if (absX == 14 || absZ == 14) {
-                    state = net.minecraft.block.Blocks.SPRUCE_WOOD.getDefaultState();
-                } else if (absX <= 3 && absZ <= 3) {
-                    state = net.minecraft.block.Blocks.OAK_PLANKS.getDefaultState();
-                } else if (absX <= 7 && absZ <= 7) {
-                    state = net.minecraft.block.Blocks.OAK_PLANKS.getDefaultState();
-                } else {
-                    state = net.minecraft.block.Blocks.OAK_PLANKS.getDefaultState();
-                }
+        if (templateOptional.isPresent()) {
+            StructureTemplate template = templateOptional.get();
 
-                stageDimension.setBlockState(pos, state);
-            }
+            //Configure placement settings (Rotation, Mirroring, etc.)
+            StructurePlacementData placementData = new StructurePlacementData()
+                    .setMirror(BlockMirror.NONE)
+                    .setRotation(BlockRotation.NONE)
+                    .setIgnoreEntities(true); // Don't load saved cows/zombies
+
+            // Structures place from the corner (lowest X, Y, Z), not the center.
+            net.minecraft.util.math.Vec3i size = template.getSize();
+            net.minecraft.util.math.BlockPos cornerPos = center.add(
+                    -size.getX() / 2,
+                    -6, //Fixing weird center, my fault :P
+                    -size.getZ() / 2
+            );
+
+            //Place the structure!
+            template.place(stageDimension, cornerPos, cornerPos, placementData, stageDimension.getRandom(), 2);
         }
 
-        // 2. Add Corner Pillars & Basic Lighting (Shifted up to sit on the new floor)
-        for (int cx : new int[]{-15, 15}) {
-            for (int cz : new int[]{-15, 15}) {
-                stageDimension.setBlockState(center.add(cx, 1, cz), Blocks.POLISHED_TUFF_WALL.getDefaultState());
-                stageDimension.setBlockState(center.add(cx, 2, cz), net.minecraft.block.Blocks.TORCH.getDefaultState());
-            }
-        }
-
-        // 3. Place the Config Block exactly in the center (it will overwrite the Andesite block seamlessly!)
+        //Place the Config Block exactly in the center
         stageDimension.setBlockState(center, corablue.stagehand.block.ModBlocks.STAGE_CONFIG_BLOCK.getDefaultState());
 
-        // 4. Inject the Owner UUID
+        //Inject the Owner UUID
         net.minecraft.block.entity.BlockEntity be = stageDimension.getBlockEntity(center);
         if (be instanceof StageConfigBlockEntity config) {
             config.setOwner(this.owner);
