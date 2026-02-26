@@ -57,7 +57,7 @@ public class DirectionalOmniParticle extends OmniParticle {
         float speed = (float) new Vector3f((float)this.velocityX, (float)this.velocityY, (float)this.velocityZ).length();
 
         // Multiply height based on speed.
-        float stretchFactor = 0.9f + (speed * 2.0f);
+        float stretchFactor = 1.0f + (speed * 1.5f);
         float lengthScale = visualScale * stretchFactor;
 
         // 6. Draw the four corners using our calculated vectors

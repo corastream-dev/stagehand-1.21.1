@@ -14,5 +14,6 @@ public record ParticleEmitterUpdatePacket(
         float aX, float aY, float aZ,
         float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ,
         float orbX, float orbY, float orbZ,
-        boolean rotate
+        boolean rotate,
+        boolean emissive
 ) {}

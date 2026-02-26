@@ -1,5 +1,11 @@
 {
   "textures": [
-    "stagehand:omni_flame"
+    "stagehand:omni_flame_1",
+    "stagehand:omni_flame_2",
+    "stagehand:omni_flame_3",
+    "stagehand:omni_flame_4",
+    "stagehand:omni_flame_5",
+    "stagehand:omni_flame_6",
+    "stagehand:omni_flame_7"
   ]
 }

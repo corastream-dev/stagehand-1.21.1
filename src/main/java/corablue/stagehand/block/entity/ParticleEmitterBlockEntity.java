@@ -43,7 +43,8 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     private int lifetime = 40;
     private float scale = 1.0f;
     private float gravity = 0.0f;
-    private boolean rotate = false; // Toggle: Rotation
+    private boolean rotate = false;
+    private boolean emissive = false;
 
     // Velocity Ranges
     private float minVelX = -0.05f; private float maxVelX = 0.05f;
@@ -76,6 +77,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     public double getAmountPerTick() { return this.amountPerTick; }
     public int getLifetime() { return this.lifetime; }
     public boolean getRotate() { return this.rotate; }
+    public boolean getEmissive() { return this.emissive; }
 
     // --- Security ---
     public void setOwner(UUID uuid) {
@@ -150,7 +152,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
                         0.0f, 1.0f, 1.0f, // End Color
                         0.25f, 0.0f, 2,   // Scale, Gravity, Lifetime
                         0.0f, 0.0f, 0.0f, // Orbital Velocity (None)
-                        false             // Rotate (No)
+                        false, true             // Rotate, Emissive
                 );
 
                 world.addParticle(hologramEffect, curWorldX, curWorldY, curWorldZ, velX, velY, velZ);
@@ -196,7 +198,8 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
                     be.gravity,
                     be.lifetime,
                     be.orbX, be.orbY, be.orbZ,
-                    be.rotate
+                    be.rotate,
+                    be.emissive
             );
 
             double spawnX = pos.getX() + 0.5 + be.offsetX + (world.random.nextGaussian() * be.areaX);
@@ -207,7 +210,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
             double velY = be.minVelY + world.random.nextDouble() * (be.maxVelY - be.minVelY);
             double velZ = be.minVelZ + world.random.nextDouble() * (be.maxVelZ - be.minVelZ);
 
-            world.addParticle(effect, spawnX, spawnY, spawnZ, velX, velY, velZ);
+            world.addParticle(effect, true, spawnX, spawnY, spawnZ, velX, velY, velZ);
 
             be.spawnAccumulator -= 1.0;
         }
@@ -221,7 +224,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
             float oX, float oY, float oZ,
             float aX, float aY, float aZ,
             float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ,
-            float orbX, float orbY, float orbZ, boolean rotate
+            float orbX, float orbY, float orbZ, boolean rotate, boolean emissive
     ) {
         this.particleType = type;
         this.c1R = r1; this.c1G = g1; this.c1B = b1;
@@ -240,6 +243,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
 
         this.orbX = orbX; this.orbY = orbY; this.orbZ = orbZ;
         this.rotate = rotate;
+        this.emissive = emissive;
 
         this.markDirtyAndSync();
     }
@@ -283,6 +287,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
 
         nbt.putFloat("OrbX", orbX); nbt.putFloat("OrbY", orbY); nbt.putFloat("OrbZ", orbZ);
         nbt.putBoolean("Rotate", rotate);
+        nbt.putBoolean("Emissive", emissive);
     }
 
     @Override
@@ -325,6 +330,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         if (nbt.contains("OrbY")) this.orbY = nbt.getFloat("OrbY");
         if (nbt.contains("OrbZ")) this.orbZ = nbt.getFloat("OrbZ");
         if (nbt.contains("Rotate")) this.rotate = nbt.getBoolean("Rotate");
+        if (nbt.contains("Emissive")) this.emissive = nbt.getBoolean("Emissive");
     }
 
     // --- Network Syncing ---

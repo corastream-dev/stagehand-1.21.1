@@ -15,7 +15,8 @@ public record OmniParticleEffect(
         float scale, float gravity,
         int lifetime,
         float orbX, float orbY, float orbZ,
-        boolean rotate
+        boolean rotate,
+        boolean emissive
 ) implements ParticleEffect {
 
     // --- JSON CODEC (For /particle command) ---
@@ -33,9 +34,10 @@ public record OmniParticleEffect(
                 Codec.FLOAT.fieldOf("orbX").forGetter(OmniParticleEffect::orbX),
                 Codec.FLOAT.fieldOf("orbY").forGetter(OmniParticleEffect::orbY),
                 Codec.FLOAT.fieldOf("orbZ").forGetter(OmniParticleEffect::orbZ),
-                Codec.BOOL.fieldOf("rotate").forGetter(OmniParticleEffect::rotate)
-        ).apply(instance, (r1, g1, b1, r2, g2, b2, s, grav, life, ox, oy, oz, rot) ->
-                new OmniParticleEffect(particleType, r1, g1, b1, r2, g2, b2, s, grav, life, ox, oy, oz, rot)));
+                Codec.BOOL.fieldOf("rotate").forGetter(OmniParticleEffect::rotate),
+                Codec.BOOL.fieldOf("emissive").forGetter(OmniParticleEffect::emissive)
+        ).apply(instance, (r1, g1, b1, r2, g2, b2, s, grav, life, ox, oy, oz, rot, emissive) ->
+                new OmniParticleEffect(particleType, r1, g1, b1, r2, g2, b2, s, grav, life, ox, oy, oz, rot, emissive)));
     }
 
     // --- PACKET CODEC (Network Sync) ---
@@ -50,6 +52,7 @@ public record OmniParticleEffect(
                     buf.writeInt(value.lifetime);
                     buf.writeFloat(value.orbX); buf.writeFloat(value.orbY); buf.writeFloat(value.orbZ);
                     buf.writeBoolean(value.rotate);
+                    buf.writeBoolean(value.emissive);
                 },
                 (buf) -> new OmniParticleEffect(
                         particleType,
@@ -59,6 +62,7 @@ public record OmniParticleEffect(
                         buf.readFloat(),
                         buf.readInt(),
                         buf.readFloat(), buf.readFloat(), buf.readFloat(),
+                        buf.readBoolean(),
                         buf.readBoolean()
                 )
         );

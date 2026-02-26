@@ -50,8 +50,9 @@ public class ModNetwork {
                         message.minVX(), message.maxVX(),
                         message.minVY(), message.maxVY(),
                         message.minVZ(), message.maxVZ(),
-                        message.orbX(), message.orbY(), message.orbZ(), // Added
-                        message.rotate() // Added
+                        message.orbX(), message.orbY(), message.orbZ(),
+                        message.rotate(),
+                        message.emissive()
                 );
             }
         });
