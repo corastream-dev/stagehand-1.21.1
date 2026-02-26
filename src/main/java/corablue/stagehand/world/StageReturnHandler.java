@@ -4,9 +4,13 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
+
+import java.util.Objects;
 
 public class StageReturnHandler {
 
@@ -73,17 +77,23 @@ public class StageReturnHandler {
     }
 
     private static void executeTeleport(ServerPlayerEntity player, ServerWorld world, double x, double y, double z, float yaw, float pitch) {
+
+        //Make sure we don't die
         player.setHealth(player.getMaxHealth());
         player.extinguish();
         player.setVelocity(0, 0, 0);
         player.fallDistance = 0.0f;
 
-        // Check if the destination is NOT the stage dimension
-        if (!world.getRegistryKey().getValue().toString().equals("stagehand:the_stage")) {
-            player.changeGameMode(net.minecraft.world.GameMode.SURVIVAL);
+        //If the destination is NOT the stage dimension...
+        if (!world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
+
+            //...don't leave them stuck in Adventure Mode in the real world
+            if (Objects.requireNonNull(player.interactionManager.getGameMode()) == GameMode.ADVENTURE) {
+                player.changeGameMode(GameMode.SURVIVAL);
+            }
+        }
 
         // Perform the teleport
         player.teleport(world, x, y, z, yaw, pitch);
-        }
     }
 }

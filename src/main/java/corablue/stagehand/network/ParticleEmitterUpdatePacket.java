@@ -8,7 +8,7 @@ public record ParticleEmitterUpdatePacket(
         Identifier particleType, // <-- NEW!
         float r1, float g1, float b1,
         float r2, float g2, float b2,
-        float scale, float gravity, int amount, int lifetime,
+        float scale, float gravity, double amount, int lifetime,
         float oX, float oY, float oZ,
         float aX, float aY, float aZ,
         float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ

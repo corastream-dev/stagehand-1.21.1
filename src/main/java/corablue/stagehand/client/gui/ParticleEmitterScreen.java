@@ -28,7 +28,8 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
     private Identifier particleType;
     private float c1R, c1G, c1B, c2R, c2G, c2B;
     private float scale, gravity;
-    private int amount, lifetime;
+    private int lifetime;
+    private double spawnRate;
     private float oX, oY, oZ;
     private float aX, aY, aZ;
     private float minVX, maxVX, minVY, maxVY, minVZ, maxVZ;
@@ -41,7 +42,7 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
         this.c1R = be.getC1R(); this.c1G = be.getC1G(); this.c1B = be.getC1B();
         this.c2R = be.getC2R(); this.c2G = be.getC2G(); this.c2B = be.getC2B();
         this.lifetime = be.getLifetime();
-        this.scale = be.getScale(); this.gravity = be.getGravity(); this.amount = be.getAmountPerTick();
+        this.scale = be.getScale(); this.gravity = be.getGravity(); this.spawnRate = be.getAmountPerTick();
 
         this.oX = be.getOffsetX(); this.oY = be.getOffsetY(); this.oZ = be.getOffsetZ();
         this.aX = be.getAreaX(); this.aY = be.getAreaY(); this.aZ = be.getAreaZ();
@@ -174,15 +175,15 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
         setupColorRow(list, "Color 1 (RGB)", c1R, val -> c1R = val, c1G, val -> c1G = val, c1B, val -> c1B = val);
         setupColorRow(list, "Color 2 (RGB)", c2R, val -> c2R = val, c2G, val -> c2G = val, c2B, val -> c2B = val);
 
-// --- 3. Behavior Row ---
+        // --- 3. Behavior Row ---
         FlowLayout behaviorRow = createRow(list, "Behavior");
         addSlider(behaviorRow, "Scale", 0.025f, 2.5f, scale, val -> { scale = val; applyChangesLive(); });
         addSlider(behaviorRow, "Gravity", -1f, 1f, gravity, val -> { gravity = val; applyChangesLive(); });
 
-// --- 4. Timing Row ---
+        // --- 4. Timing Row ---
         FlowLayout timingRow = createRow(list, "Timing");
-        addIntSlider(timingRow, "Spawn/Tick", 0, 50, amount, val -> { amount = val; applyChangesLive(); });
-        addIntSlider(timingRow, "Lifetime", 1, 200, lifetime, val -> { lifetime = val; applyChangesLive(); });
+        addFloatSlider(timingRow, "Spawn/Tick", 0.0, 20.0, spawnRate, 2.0, val -> { spawnRate = val; applyChangesLive(); });
+        addIntSlider(timingRow, "Lifetime", 1, 150, lifetime, val -> { lifetime = val; applyChangesLive(); });
 
         setupCoordRow(list, "Spawn Offset", oX, val -> oX = val, oY, val -> oY = val, oZ, val -> oZ = val);
         setupCoordRow(list, "Area Spread", aX, val -> aX = val, aY, val -> aY = val, aZ, val -> aZ = val);
@@ -244,10 +245,47 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
         row.child(col);
     }
 
+    private void addFloatSlider(
+            FlowLayout row,
+            String name,
+            double min,
+            double max,
+            double current,
+            double exponent,
+            java.util.function.DoubleConsumer onChange
+    ) {
+        final double range = max - min;
+
+        FlowLayout col = (FlowLayout) Containers
+                .verticalFlow(Sizing.content(), Sizing.content())
+                .horizontalAlignment(HorizontalAlignment.CENTER)
+                .margins(Insets.horizontal(4));
+
+        col.child(
+                Components.label(Text.literal(name))
+                        .color(Color.ofRgb(0x888888))
+                        .margins(Insets.bottom(2))
+        );
+
+        SliderComponent slider = Components.slider(Sizing.fixed(130));
+
+        double normalized = (current - min) / range;
+        slider.value(Math.pow(normalized, 1.0 / exponent));
+
+        slider.onChanged().subscribe(v -> {
+            double curved = Math.pow(v, exponent);
+            double value = min + curved * range;
+            onChange.accept(value);
+        });
+
+        col.child(slider);
+        row.child(col);
+    }
+
     private void addIntSlider(FlowLayout row, String name, int min, int max, int current, java.util.function.Consumer<Integer> onChange) {
         FlowLayout col = (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content()).horizontalAlignment(HorizontalAlignment.CENTER).margins(Insets.horizontal(4));
         col.child(Components.label(Text.literal(name)).color(Color.ofRgb(0x888888)).margins(Insets.bottom(2)));
-        SliderComponent slider = Components.slider(Sizing.fixed(80));
+        SliderComponent slider = Components.slider(Sizing.fixed(130));
         slider.value((double)(current - min) / (max - min));
         slider.onChanged().subscribe(v -> onChange.accept((int)Math.round(min + v * (max - min))));
         col.child(slider);
@@ -266,12 +304,12 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
     private void applyChangesLive() {
         this.be.updateSettings(
                 particleType,
-                c1R, c1G, c1B, c2R, c2G, c2B, scale, gravity, amount, lifetime,
+                c1R, c1G, c1B, c2R, c2G, c2B, scale, gravity, spawnRate, lifetime,
                 oX, oY, oZ, aX, aY, aZ, minVX, maxVX, minVY, maxVY, minVZ, maxVZ
         );
         ModNetwork.CHANNEL.clientHandle().send(new ParticleEmitterUpdatePacket(
                 this.blockPos, particleType,
-                c1R, c1G, c1B, c2R, c2G, c2B, scale, gravity, amount, lifetime,
+                c1R, c1G, c1B, c2R, c2G, c2B, scale, gravity, spawnRate, lifetime,
                 oX, oY, oZ, aX, aY, aZ, minVX, maxVX, minVY, maxVY, minVZ, maxVZ
         ));
     }

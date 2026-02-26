@@ -33,6 +33,13 @@ public class FatigueCoreBlockEntity extends BlockEntity {
     private final Set<UUID> optedOutPlayers = new HashSet<>();
     private final Set<UUID> currentlyAffected = new HashSet<>();
 
+    //Unsure about this? Might remove
+    @Override
+    public void markRemoved() {
+        ACTIVE_CORES.remove(this);
+        super.markRemoved();
+    }
+
     public FatigueCoreBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FATIGUE_CORE_BE, pos, state);
         ACTIVE_CORES.add(this);
@@ -58,7 +65,7 @@ public class FatigueCoreBlockEntity extends BlockEntity {
 
             playersHandledThisTick.add(uuid);
 
-            // 1. Apply Mining Fatigue III (Amplifier 2)
+            // 1. Apply Mining Fatigue III
             // Duration is 31 ticks to ensure overlap between 20-tick pulses
             player.addStatusEffect(new StatusEffectInstance(StatusEffects.MINING_FATIGUE, 31, 2, true, false, true));
             be.currentlyAffected.add(uuid);
@@ -123,7 +130,10 @@ public class FatigueCoreBlockEntity extends BlockEntity {
         this.currentlyAffected.clear();
     }
 
-    // ... (Remaining methods for NBT and Sync stay the same) ...
+    public boolean isPlayerInRange(PlayerEntity player) {
+        return player.getWorld() == this.getWorld()
+                && player.squaredDistanceTo(this.pos.toCenterPos()) <= (this.range * this.range);
+    }
 
     public void optOutPlayer(UUID uuid) {
         this.optedOutPlayers.add(uuid);

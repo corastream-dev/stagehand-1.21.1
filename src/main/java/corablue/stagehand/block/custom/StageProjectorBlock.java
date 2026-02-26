@@ -41,7 +41,10 @@ public class StageProjectorBlock extends BlockWithEntity {
         return net.minecraft.block.BlockRenderType.ENTITYBLOCK_ANIMATED;
     }
 
-    @Override protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
+    @Override
+    protected MapCodec<? extends BlockWithEntity> getCodec() {
+        return CODEC;
+    }
 
     @Nullable
     @Override
@@ -144,7 +147,6 @@ public class StageProjectorBlock extends BlockWithEntity {
     }
 
     public void executeTeleport(World world, BlockPos pos, BlockState state, StageProjectorBlockEntity projector) {
-        // --- NEW: Read the saved memory instead of checking the world power! ---
         int power = projector.getTeleportRadius();
         if (power == 0) power = 15; // Ultimate fallback just in case of NBT weirdness
 
@@ -161,20 +163,24 @@ public class StageProjectorBlock extends BlockWithEntity {
                 isStageReady = config.isStageReady();
             }
 
-            Box teleportArea = new Box(pos).expand(power);
-            List<ServerPlayerEntity> players = world.getEntitiesByClass(ServerPlayerEntity.class, teleportArea, Entity::isAlive);
+            //Max radius of teleport now 8 blocks
+            Box teleportArea = new Box(pos).expand(power * 0.5);
+
+            // Prepare spherical math
+            net.minecraft.util.math.Vec3d center = pos.toCenterPos(); // Get exact center of block
+            double radiusSquared = power * power; // Square it so we don't have to use slow Math.sqrt()
+
+            // Get players, but filter out the corners of the box!
+            List<ServerPlayerEntity> players = world.getEntitiesByClass(ServerPlayerEntity.class, teleportArea,
+                    // Keep player IF: They are alive AND inside the sphere radius
+                    p -> p.isAlive() && p.squaredDistanceTo(center) <= radiusSquared);
 
             for (ServerPlayerEntity player : players) {
                 if (projector.isOwner(player) || isStageReady) {
 
                     if (!player.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
                         corablue.stagehand.world.StageManager manager = corablue.stagehand.world.StageManager.getServerState(world.getServer());
-                        manager.saveReturnData(
-                                player.getUuid(),
-                                player.getWorld().getRegistryKey().getValue().toString(),
-                                player.getX(), player.getY(), player.getZ(),
-                                player.getYaw(), player.getPitch()
-                        );
+                        manager.saveReturnData(player.getUuid(), player.getWorld().getRegistryKey().getValue().toString(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
                     }
 
                     double offsetX = player.getX() - pos.getX();

@@ -9,7 +9,6 @@ import corablue.stagehand.network.ModNetwork;
 import corablue.stagehand.screen.ModScreenHandlers;
 import corablue.stagehand.sound.ModSounds;
 import corablue.stagehand.world.ModDimensions;
-import corablue.stagehand.world.StageDeathOverride;
 import corablue.stagehand.world.StageManager;
 import net.fabricmc.api.ModInitializer;
 
@@ -52,17 +51,17 @@ public class Stagehand implements ModInitializer {
 		ModSounds.registerSounds();
 		ModNetwork.init();
 		ModDimensions.register();
-		StageDeathOverride.registerStageDeathOverride();
 		ModScreenHandlers.registerScreenHandlers();
 
-		// --- 1. FIRST JOIN INTERCEPTOR ---
+		//Admin can now set Stages as worldspawns!
+		//Detect new players and...
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.getPlayer();
 			StageManager manager = StageManager.getServerState(server);
 
 			// Add new players to the queue instead of teleporting instantly
 			if (manager.isNewPlayer(player.getUuid()) && manager.getHubPos() != null) {
-				pendingHubTeleports.put(player.getUuid(), 10); // Wait 10 ticks (0.5 seconds)
+				pendingHubTeleports.put(player.getUuid(), 10);
 			}
 		});
 
@@ -95,7 +94,7 @@ public class Stagehand implements ModInitializer {
 			}
 		});
 
-		// --- 2. GLOBAL RESPAWN INTERCEPTOR ---
+		//Return new players to hub on death if they have no spawn point yet
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
 			if (!alive && newPlayer.getSpawnPointPosition() == null) {
 				StageManager manager = StageManager.getServerState(newPlayer.getServer());
@@ -150,8 +149,7 @@ public class Stagehand implements ModInitializer {
 						boolean successfullyOptedOut = false;
 						for (FatigueCoreBlockEntity core : FatigueCoreBlockEntity.ACTIVE_CORES) {
 							if (core.getWorld() == player.getWorld()) {
-								double distance = Math.sqrt(core.getPos().getSquaredDistance(player.getPos()));
-								if (distance <= core.getRange()) {
+								if (core.isPlayerInRange(player)) {
 									core.optOutPlayer(player.getUuid());
 									successfullyOptedOut = true;
 								}

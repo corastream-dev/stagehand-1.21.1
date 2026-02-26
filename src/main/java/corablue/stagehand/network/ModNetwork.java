@@ -4,12 +4,15 @@ import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.LoreAnvilBlockEntity;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
+import corablue.stagehand.world.StageReturnHandler;
 import io.wispforest.owo.network.OwoNetChannel;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Rarity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.GameMode;
 
 public class ModNetwork {
     public static final OwoNetChannel CHANNEL = OwoNetChannel.create(Identifier.of("stagehand", "main"));
@@ -80,37 +83,50 @@ public class ModNetwork {
             }
         });
 
+        //Stage Config Packet
         CHANNEL.registerServerbound(StageConfigUpdatePacket.class, (message, access) -> {
             ServerPlayerEntity player = access.player();
             BlockPos pos = message.pos();
-            String action = message.action();
+            StageConfigUpdatePacket.StageAction action = message.action();
 
-            // 1. Handle RETURN first.
-            // It should not depend on the BlockEntity existing in the current world.
-            if (action.equals("RETURN")) {
-                corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FAIL);
-                return; // Exit early so we don't process further logic after teleporting
-            }
-
-            // 2. Attempt to fetch the Block Entity for location-based actions (SAVE/GAMEMODE)
+            //Get some info from the config block
             BlockEntity be = player.getWorld().getBlockEntity(pos);
+            boolean isBuilder = false;
+            boolean isOwner = false;
             if (be instanceof StageConfigBlockEntity config) {
-                boolean isOwner = config.isOwner(player);
-                boolean isBuilder = config.isBuilder(player);
+                isOwner = config.isOwner(player);
+                isBuilder = config.isBuilder(player);
 
-                // Action: Save Config (Owner Only)
-                if (action.equals("SAVE") && isOwner) {
-                    config.setStageReady(message.isReady());
-                    // Ensure we don't save a null string to the block entity
-                    config.setBuilderWhitelist(message.whitelist() != null ? message.whitelist() : "");
-                }
 
-                // Action: Gamemode Swap (Owner & Builders)
-                else if (action.equals("GAMEMODE") && isBuilder) {
-                    if (player.interactionManager.getGameMode() == net.minecraft.world.GameMode.ADVENTURE) {
-                        player.changeGameMode(net.minecraft.world.GameMode.SURVIVAL);
-                    } else {
-                        player.changeGameMode(net.minecraft.world.GameMode.ADVENTURE);
+                switch (action) {
+                    case RETURN -> {
+                        //Just return the player
+                        corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FAIL);
+                    }
+                    case SAVE -> {
+                        if (isOwner) {
+                            //Save config data from block
+                            config.setStageReady(message.isReady());
+                            config.setBuilderWhitelist(message.whitelist() != null ? message.whitelist() : "");
+                        }
+                    }
+                    case GAMEMODE -> {
+                        if (isBuilder) {
+                            switch (player.interactionManager.getGameMode()) {
+                                case GameMode.ADVENTURE -> {
+                                    player.changeGameMode(GameMode.SURVIVAL);
+                                }
+                                case GameMode.SURVIVAL -> {
+                                    player.changeGameMode(GameMode.ADVENTURE);
+                                }
+                                case GameMode.CREATIVE -> {
+                                    player.sendMessage(Text.literal("§cYou are in Creative Mode! Leave Creative Mode to toggle Adventure Mode."));
+                                }
+                                case GameMode.SPECTATOR -> {
+                                    player.sendMessage(Text.literal("§cYou are in Spectator Mode! Leave Spectator Mode to toggle Adventure Mode."));
+                                }
+                            }
+                        }
                     }
                 }
             }

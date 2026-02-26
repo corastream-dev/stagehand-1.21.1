@@ -1,11 +1,12 @@
 package corablue.stagehand.block.entity;
 
+import corablue.stagehand.world.StageManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
-
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.structure.StructureTemplate;
 import net.minecraft.structure.StructureTemplateManager;
@@ -13,6 +14,11 @@ import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+
+import corablue.stagehand.block.ModBlocks;
+import corablue.stagehand.world.ModDimensions;
+import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -141,7 +147,7 @@ public class StageProjectorBlockEntity extends BlockEntity {
             net.minecraft.util.math.Vec3i size = template.getSize();
             net.minecraft.util.math.BlockPos cornerPos = center.add(
                     -size.getX() / 2,
-                    -6, //Fixing weird center, my fault :P
+                    -6, // Adjust Y if you want the floor to be flush with the center
                     -size.getZ() / 2
             );
 

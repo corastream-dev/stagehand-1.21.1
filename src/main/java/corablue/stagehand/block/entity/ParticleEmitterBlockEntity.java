@@ -37,7 +37,8 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     private float areaX = 0.5f; private float areaY = 0.5f; private float areaZ = 0.5f;
 
     // Behavior
-    private int amountPerTick = 1;
+    private double amountPerTick = 1;
+    private double spawnAccumulator = 0;
     private int lifetime = 40;
     private float scale = 1.0f;
     private float gravity = 0.0f;
@@ -64,7 +65,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
 
     public float getScale() { return this.scale; }
     public float getGravity() { return this.gravity; }
-    public int getAmountPerTick() { return this.amountPerTick; }
+    public double getAmountPerTick() { return this.amountPerTick; }
     public int getLifetime() { return this.lifetime; }
 
     // --- Security ---
@@ -157,13 +158,23 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         @SuppressWarnings("unchecked")
         ParticleType<OmniParticleEffect> omniType = (ParticleType<OmniParticleEffect>) rawType;
 
-        for (int i = 0; i < be.amountPerTick; i++) {
+        be.spawnAccumulator += be.amountPerTick;
+        while (be.spawnAccumulator >= 1.0) {
+
             float lerpFactor = world.random.nextFloat();
             float finalR = MathHelper.lerp(lerpFactor, be.c1R, be.c2R);
             float finalG = MathHelper.lerp(lerpFactor, be.c1G, be.c2G);
             float finalB = MathHelper.lerp(lerpFactor, be.c1B, be.c2B);
 
-            OmniParticleEffect effect = new OmniParticleEffect(omniType, finalR, finalG, finalB, be.scale, be.gravity, be.lifetime);
+            OmniParticleEffect effect = new OmniParticleEffect(
+                    omniType,
+                    finalR,
+                    finalG,
+                    finalB,
+                    be.scale,
+                    be.gravity,
+                    be.lifetime
+            );
 
             double spawnX = pos.getX() + 0.5 + be.offsetX + (world.random.nextGaussian() * be.areaX);
             double spawnY = pos.getY() + 0.5 + be.offsetY + (world.random.nextGaussian() * be.areaY);
@@ -174,6 +185,8 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
             double velZ = be.minVelZ + world.random.nextDouble() * (be.maxVelZ - be.minVelZ);
 
             world.addParticle(effect, spawnX, spawnY, spawnZ, velX, velY, velZ);
+
+            be.spawnAccumulator -= 1.0;
         }
     }
 
@@ -181,7 +194,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     public void updateSettings(
             Identifier type,
             float r1, float g1, float b1, float r2, float g2, float b2,
-            float scale, float gravity, int amount, int lifetime,
+            float scale, float gravity, double amount, int lifetime,
             float oX, float oY, float oZ,
             float aX, float aY, float aZ,
             float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ
@@ -228,7 +241,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         nbt.putFloat("OffsetX", offsetX); nbt.putFloat("OffsetY", offsetY); nbt.putFloat("OffsetZ", offsetZ);
         nbt.putFloat("AreaX", areaX); nbt.putFloat("AreaY", areaY); nbt.putFloat("AreaZ", areaZ);
 
-        nbt.putInt("Amount", amountPerTick);
+        nbt.putDouble("Amount", amountPerTick);
         nbt.putInt("Lifetime", lifetime);
         nbt.putFloat("Scale", scale);
         nbt.putFloat("Gravity", gravity);
@@ -261,7 +274,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         if (nbt.contains("AreaY")) this.areaY = nbt.getFloat("AreaY");
         if (nbt.contains("AreaZ")) this.areaZ = nbt.getFloat("AreaZ");
 
-        if (nbt.contains("Amount")) this.amountPerTick = nbt.getInt("Amount");
+        if (nbt.contains("Amount")) this.amountPerTick = nbt.getDouble("Amount");
         if (nbt.contains("Lifetime")) this.lifetime = nbt.getInt("Lifetime");
         if (nbt.contains("Scale")) this.scale = nbt.getFloat("Scale");
         if (nbt.contains("Gravity")) this.gravity = nbt.getFloat("Gravity");

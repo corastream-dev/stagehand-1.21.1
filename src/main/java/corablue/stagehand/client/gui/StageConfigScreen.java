@@ -112,7 +112,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
             ButtonComponent saveBtn = Components.button(
                     Text.literal("Save Settings")
                             .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
-                    button -> sendAction("SAVE")
+                    button -> sendAction(StageConfigUpdatePacket.StageAction.SAVE)
             );
             saveBtn.sizing(Sizing.fill(100), Sizing.fixed(20));
             saveBtn.renderer(ButtonComponent.Renderer.flat(BUTTON_BASE, BUTTON_HOVER, SAVE_ACCENT));
@@ -129,7 +129,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
         ButtonComponent gmBtn = Components.button(
                 Text.literal("Mode: " + gmName).styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 button -> {
-                    sendAction("GAMEMODE");
+                    sendAction(StageConfigUpdatePacket.StageAction.GAMEMODE);
                     this.close();
                 }
         );
@@ -139,7 +139,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
 
         ButtonComponent backBtn = Components.button(
                 Text.literal("Exit Stage").styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
-                button -> { sendAction("RETURN"); this.close(); }
+                button -> { sendAction(StageConfigUpdatePacket.StageAction.RETURN); this.close(); }
         );
         backBtn.sizing(Sizing.fill(50), Sizing.fixed(20));
         backBtn.renderer(ButtonComponent.Renderer.flat(BUTTON_BASE, BUTTON_HOVER, ACCENT));
@@ -151,7 +151,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
         rootComponent.child(borderWrapper);
     }
 
-    private void sendAction(String action) {
+    private void sendAction(StageConfigUpdatePacket.StageAction action) {
         // If the field exists, get text; otherwise use the original string or empty
         String currentWhitelist = (this.whitelistField != null) ? this.whitelistField.getText() : (this.whitelist != null ? this.whitelist : "");
 
