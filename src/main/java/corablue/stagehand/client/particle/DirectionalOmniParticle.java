@@ -12,11 +12,12 @@ import org.joml.Vector3f;
 
 public class DirectionalOmniParticle extends OmniParticle {
 
+    // FIXED: Now accepts OmniParticleEffect params instead of individual values
     protected DirectionalOmniParticle(ClientWorld world, double x, double y, double z,
                                       double velocityX, double velocityY, double velocityZ,
-                                      float red, float green, float blue, float scale, float gravity, int lifetime,
+                                      OmniParticleEffect params,
                                       SpriteProvider spriteProvider) {
-        super(world, x, y, z, velocityX, velocityY, velocityZ, red, green, blue, scale, gravity, lifetime, spriteProvider);
+        super(world, x, y, z, velocityX, velocityY, velocityZ, params, spriteProvider);
     }
 
     @Override
@@ -44,7 +45,7 @@ public class DirectionalOmniParticle extends OmniParticle {
         // 4. The "Right" vector forces the image's flat side to turn toward the camera
         Vector3f right = new Vector3f(toCamera).cross(up);
 
-        // Fallback in case you look EXACTLY down the path of the particle (prevents a 0-width crash)
+        // Fallback in case you look EXACTLY down the path of the particle
         if (right.lengthSquared() < 0.0001f) {
             right.set(1, 0, 0);
         } else {
@@ -55,11 +56,11 @@ public class DirectionalOmniParticle extends OmniParticle {
         float visualScale = this.getSize(tickDelta);
         float speed = (float) new Vector3f((float)this.velocityX, (float)this.velocityY, (float)this.velocityZ).length();
 
-        // Multiply height based on speed. Tweak this '4.0f' if you want longer/shorter rain streaks!
-        float stretchFactor = 1.0f + (speed * 4.0f);
+        // Multiply height based on speed.
+        float stretchFactor = 0.9f + (speed * 2.0f);
         float lengthScale = visualScale * stretchFactor;
 
-        // 6. Draw the four corners using our calculated vectors!
+        // 6. Draw the four corners using our calculated vectors
         Vector3f[] corners = new Vector3f[]{
                 new Vector3f(renderX - right.x * visualScale - up.x * lengthScale,
                         renderY - right.y * visualScale - up.y * lengthScale,
@@ -99,9 +100,9 @@ public class DirectionalOmniParticle extends OmniParticle {
         public Particle createParticle(OmniParticleEffect parameters, ClientWorld world,
                                        double x, double y, double z,
                                        double velocityX, double velocityY, double velocityZ) {
+            // FIXED: Pass the parameters object directly
             return new DirectionalOmniParticle(world, x, y, z, velocityX, velocityY, velocityZ,
-                    parameters.red(), parameters.green(), parameters.blue(),
-                    parameters.scale(), parameters.gravity(), parameters.lifetime(),
+                    parameters,
                     this.spriteProvider);
         }
     }

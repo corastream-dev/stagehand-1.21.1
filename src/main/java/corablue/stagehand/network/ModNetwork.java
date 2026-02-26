@@ -33,7 +33,7 @@ public class ModNetwork {
             }
         });
 
-        //Particle Emitter Packet
+        // Particle Emitter Packet
         CHANNEL.registerServerbound(ParticleEmitterUpdatePacket.class, (message, access) -> {
             var world = access.player().getWorld();
             var be = world.getBlockEntity(message.pos());
@@ -41,14 +41,17 @@ public class ModNetwork {
             if (be instanceof corablue.stagehand.block.entity.ParticleEmitterBlockEntity emitter) {
                 emitter.updateSettings(
                         message.particleType(),
-                        message.r1(), message.g1(), message.b1(), // Color 1
-                        message.r2(), message.g2(), message.b2(), // Color 2
-                        message.scale(), message.gravity(), message.amount(), message.lifetime(), // Behavior & Timing
-                        message.oX(), message.oY(), message.oZ(), // Offsets
-                        message.aX(), message.aY(), message.aZ(), // Area Spread
-                        message.minVX(), message.maxVX(),         // Velocity X
-                        message.minVY(), message.maxVY(),         // Velocity Y
-                        message.minVZ(), message.maxVZ()          // Velocity Z
+                        message.r1(), message.g1(), message.b1(),
+                        message.r2(), message.g2(), message.b2(),
+                        message.useLifetimeColor(), // Added
+                        message.scale(), message.gravity(), message.amount(), message.lifetime(),
+                        message.oX(), message.oY(), message.oZ(),
+                        message.aX(), message.aY(), message.aZ(),
+                        message.minVX(), message.maxVX(),
+                        message.minVY(), message.maxVY(),
+                        message.minVZ(), message.maxVZ(),
+                        message.orbX(), message.orbY(), message.orbZ(), // Added
+                        message.rotate() // Added
                 );
             }
         });

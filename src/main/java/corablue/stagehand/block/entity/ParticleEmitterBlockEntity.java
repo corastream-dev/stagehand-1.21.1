@@ -31,6 +31,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     // Colors
     private float c1R = 1.0f; private float c1G = 1.0f; private float c1B = 1.0f;
     private float c2R = 1.0f; private float c2G = 1.0f; private float c2B = 1.0f;
+    private boolean useLifetimeColor = false; // Toggle: Random vs Lifetime
 
     // Spawning Area & Offsets
     private float offsetX = 0.0f; private float offsetY = 0.5f; private float offsetZ = 0.0f;
@@ -42,11 +43,15 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     private int lifetime = 40;
     private float scale = 1.0f;
     private float gravity = 0.0f;
+    private boolean rotate = false; // Toggle: Rotation
 
     // Velocity Ranges
     private float minVelX = -0.05f; private float maxVelX = 0.05f;
     private float minVelY = 0.02f;  private float maxVelY = 0.08f;
     private float minVelZ = -0.05f; private float maxVelZ = 0.05f;
+
+    // Orbital Velocity (Angular velocity of vector)
+    private float orbX = 0.0f; private float orbY = 0.0f; private float orbZ = 0.0f;
 
     public ParticleEmitterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PARTICLE_EMITTER_BE, pos, state);
@@ -56,6 +61,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     public Identifier getParticleType() { return this.particleType; }
     public float getC1R() { return this.c1R; } public float getC1G() { return this.c1G; } public float getC1B() { return this.c1B; }
     public float getC2R() { return this.c2R; } public float getC2G() { return this.c2G; } public float getC2B() { return this.c2B; }
+    public boolean getUseLifetimeColor() { return this.useLifetimeColor; }
 
     public float getOffsetX() { return this.offsetX; } public float getOffsetY() { return this.offsetY; } public float getOffsetZ() { return this.offsetZ; }
     public float getAreaX() { return this.areaX; } public float getAreaY() { return this.areaY; } public float getAreaZ() { return this.areaZ; }
@@ -63,10 +69,13 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     public float getMinVelY() { return this.minVelY; } public float getMaxVelY() { return this.maxVelY; }
     public float getMinVelZ() { return this.minVelZ; } public float getMaxVelZ() { return this.maxVelZ; }
 
+    public float getOrbX() { return this.orbX; } public float getOrbY() { return this.orbY; } public float getOrbZ() { return this.orbZ; }
+
     public float getScale() { return this.scale; }
     public float getGravity() { return this.gravity; }
     public double getAmountPerTick() { return this.amountPerTick; }
     public int getLifetime() { return this.lifetime; }
+    public boolean getRotate() { return this.rotate; }
 
     // --- Security ---
     public void setOwner(UUID uuid) {
@@ -83,7 +92,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         // ==========================================
         // 1. DECORATIVE HOLOGRAM (Smooth + Sine Wave)
         // ==========================================
-        ParticleType<?> rawDotType = Registries.PARTICLE_TYPE.get(Identifier.of("stagehand", "omni_dot_dir"));
+        ParticleType<?> rawDotType = Registries.PARTICLE_TYPE.get(Identifier.of("stagehand", "omni_dot"));
         if (rawDotType != null) {
             @SuppressWarnings("unchecked")
             ParticleType<OmniParticleEffect> omniDotType = (ParticleType<OmniParticleEffect>) rawDotType;
@@ -107,25 +116,17 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
                 double offset = i * (2 * Math.PI / 3);
 
                 // --- CALCULATE LOCAL OFFSETS ---
-                // Local Y = The axis sticking OUT of the block (Forward)
-                // Local X/Z = The ring plane
-
-                // Current Tick
                 double curAngle = (time * orbitSpeed) + offset;
                 double localX = Math.cos(curAngle) * radius;
                 double localY = baseForwardOffset + (Math.sin(time * sineSpeed) * sineAmplitude);
                 double localZ = Math.sin(curAngle) * radius;
 
-                // Next Tick (for velocity)
                 double nextAngle = ((time + 1) * orbitSpeed) + offset;
                 double nextLocalX = Math.cos(nextAngle) * radius;
                 double nextLocalY = baseForwardOffset + (Math.sin((time + 1) * sineSpeed) * sineAmplitude);
                 double nextLocalZ = Math.sin(nextAngle) * radius;
 
                 // --- ROTATE TO WORLD SPACE ---
-                // Helper method to rotate the vector (localX, localY, localZ) based on facing
-                // We add 0.5 to center it in the block
-
                 double[] curPos = rotateVector(localX, localY, localZ, facing);
                 double curWorldX = pos.getX() + 0.5 + curPos[0];
                 double curWorldY = pos.getY() + 0.5 + curPos[1];
@@ -141,13 +142,23 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
                 double velY = nextWorldY - curWorldY;
                 double velZ = nextWorldZ - curWorldZ;
 
-                OmniParticleEffect hologramEffect = new OmniParticleEffect(omniDotType, 0.0f, 1.0f, 1.0f, 0.25f, 0.0f, 2);
+                // FIXED: Use the new constructor with all arguments
+                // r1, g1, b1 (Cyan), r2, g2, b2 (Cyan), scale, gravity, lifetime, orbX, orbY, orbZ, rotate
+                OmniParticleEffect hologramEffect = new OmniParticleEffect(
+                        omniDotType,
+                        0.0f, 1.0f, 1.0f, // Start Color
+                        0.0f, 1.0f, 1.0f, // End Color
+                        0.25f, 0.0f, 2,   // Scale, Gravity, Lifetime
+                        0.0f, 0.0f, 0.0f, // Orbital Velocity (None)
+                        false             // Rotate (No)
+                );
+
                 world.addParticle(hologramEffect, curWorldX, curWorldY, curWorldZ, velX, velY, velZ);
             }
         }
 
         // ==========================================
-        // 2. FUNCTIONAL EMITTER (Respects Redstone & Settings)
+        // 2. FUNCTIONAL EMITTER
         // ==========================================
 
         if (!be.isActive || state.get(ParticleEmitterBlock.POWERED)) return;
@@ -161,19 +172,31 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         be.spawnAccumulator += be.amountPerTick;
         while (be.spawnAccumulator >= 1.0) {
 
-            float lerpFactor = world.random.nextFloat();
-            float finalR = MathHelper.lerp(lerpFactor, be.c1R, be.c2R);
-            float finalG = MathHelper.lerp(lerpFactor, be.c1G, be.c2G);
-            float finalB = MathHelper.lerp(lerpFactor, be.c1B, be.c2B);
+            float r1, g1, b1, r2, g2, b2;
+
+            if (be.useLifetimeColor) {
+                // Lifetime Mode: Pass Start and End colors directly
+                r1 = be.c1R; g1 = be.c1G; b1 = be.c1B;
+                r2 = be.c2R; g2 = be.c2G; b2 = be.c2B;
+            } else {
+                // Random Mode: Pick ONE color and use it for both Start and End
+                float lerpFactor = world.random.nextFloat();
+                float finalR = MathHelper.lerp(lerpFactor, be.c1R, be.c2R);
+                float finalG = MathHelper.lerp(lerpFactor, be.c1G, be.c2G);
+                float finalB = MathHelper.lerp(lerpFactor, be.c1B, be.c2B);
+                r1 = finalR; g1 = finalG; b1 = finalB;
+                r2 = finalR; g2 = finalG; b2 = finalB;
+            }
 
             OmniParticleEffect effect = new OmniParticleEffect(
                     omniType,
-                    finalR,
-                    finalG,
-                    finalB,
+                    r1, g1, b1,
+                    r2, g2, b2,
                     be.scale,
                     be.gravity,
-                    be.lifetime
+                    be.lifetime,
+                    be.orbX, be.orbY, be.orbZ,
+                    be.rotate
             );
 
             double spawnX = pos.getX() + 0.5 + be.offsetX + (world.random.nextGaussian() * be.areaX);
@@ -193,15 +216,18 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     // --- Update Settings ---
     public void updateSettings(
             Identifier type,
-            float r1, float g1, float b1, float r2, float g2, float b2,
+            float r1, float g1, float b1, float r2, float g2, float b2, boolean useLifetimeColor,
             float scale, float gravity, double amount, int lifetime,
             float oX, float oY, float oZ,
             float aX, float aY, float aZ,
-            float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ
+            float minVX, float maxVX, float minVY, float maxVY, float minVZ, float maxVZ,
+            float orbX, float orbY, float orbZ, boolean rotate
     ) {
         this.particleType = type;
         this.c1R = r1; this.c1G = g1; this.c1B = b1;
         this.c2R = r2; this.c2G = g2; this.c2B = b2;
+        this.useLifetimeColor = useLifetimeColor;
+
         this.scale = scale; this.gravity = gravity;
         this.amountPerTick = amount; this.lifetime = lifetime;
 
@@ -212,17 +238,21 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         this.minVelY = minVY; this.maxVelY = maxVY;
         this.minVelZ = minVZ; this.maxVelZ = maxVZ;
 
+        this.orbX = orbX; this.orbY = orbY; this.orbZ = orbZ;
+        this.rotate = rotate;
+
         this.markDirtyAndSync();
     }
 
     private static double[] rotateVector(double x, double y, double z, Direction facing) {
+        // (Same as before)
         switch (facing) {
-            case UP:    return new double[]{ x,  y,  z}; // Y is Up
-            case DOWN:  return new double[]{ x, -y, -z}; // Y is Down
-            case NORTH: return new double[]{ x,  z, -y}; // Y is North (-Z)
-            case SOUTH: return new double[]{-x,  z,  y}; // Y is South (+Z)
-            case EAST:  return new double[]{ y,  z, -x}; // Y is East (+X)
-            case WEST:  return new double[]{-y,  z,  x}; // Y is West (-X)
+            case UP:    return new double[]{ x,  y,  z};
+            case DOWN:  return new double[]{ x, -y, -z};
+            case NORTH: return new double[]{ x,  z, -y};
+            case SOUTH: return new double[]{-x,  z,  y};
+            case EAST:  return new double[]{ y,  z, -x};
+            case WEST:  return new double[]{-y,  z,  x};
             default:    return new double[]{ x,  y,  z};
         }
     }
@@ -237,6 +267,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
 
         nbt.putFloat("C1R", c1R); nbt.putFloat("C1G", c1G); nbt.putFloat("C1B", c1B);
         nbt.putFloat("C2R", c2R); nbt.putFloat("C2G", c2G); nbt.putFloat("C2B", c2B);
+        nbt.putBoolean("UseLifetimeColor", useLifetimeColor);
 
         nbt.putFloat("OffsetX", offsetX); nbt.putFloat("OffsetY", offsetY); nbt.putFloat("OffsetZ", offsetZ);
         nbt.putFloat("AreaX", areaX); nbt.putFloat("AreaY", areaY); nbt.putFloat("AreaZ", areaZ);
@@ -249,6 +280,9 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         nbt.putFloat("MinVelX", minVelX); nbt.putFloat("MaxVelX", maxVelX);
         nbt.putFloat("MinVelY", minVelY); nbt.putFloat("MaxVelY", maxVelY);
         nbt.putFloat("MinVelZ", minVelZ); nbt.putFloat("MaxVelZ", maxVelZ);
+
+        nbt.putFloat("OrbX", orbX); nbt.putFloat("OrbY", orbY); nbt.putFloat("OrbZ", orbZ);
+        nbt.putBoolean("Rotate", rotate);
     }
 
     @Override
@@ -265,6 +299,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         if (nbt.contains("C2R")) this.c2R = nbt.getFloat("C2R");
         if (nbt.contains("C2G")) this.c2G = nbt.getFloat("C2G");
         if (nbt.contains("C2B")) this.c2B = nbt.getFloat("C2B");
+        if (nbt.contains("UseLifetimeColor")) this.useLifetimeColor = nbt.getBoolean("UseLifetimeColor");
 
         if (nbt.contains("OffsetX")) this.offsetX = nbt.getFloat("OffsetX");
         if (nbt.contains("OffsetY")) this.offsetY = nbt.getFloat("OffsetY");
@@ -285,6 +320,11 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         if (nbt.contains("MaxVelY")) this.maxVelY = nbt.getFloat("MaxVelY");
         if (nbt.contains("MinVelZ")) this.minVelZ = nbt.getFloat("MinVelZ");
         if (nbt.contains("MaxVelZ")) this.maxVelZ = nbt.getFloat("MaxVelZ");
+
+        if (nbt.contains("OrbX")) this.orbX = nbt.getFloat("OrbX");
+        if (nbt.contains("OrbY")) this.orbY = nbt.getFloat("OrbY");
+        if (nbt.contains("OrbZ")) this.orbZ = nbt.getFloat("OrbZ");
+        if (nbt.contains("Rotate")) this.rotate = nbt.getBoolean("Rotate");
     }
 
     // --- Network Syncing ---

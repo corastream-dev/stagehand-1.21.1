@@ -6,30 +6,50 @@ import net.minecraft.client.particle.ParticleTextureSheet;
 import net.minecraft.client.particle.SpriteBillboardParticle;
 import net.minecraft.client.particle.SpriteProvider;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.MathHelper;
+import org.joml.Vector3f;
 
 public class OmniParticle extends SpriteBillboardParticle {
 
-    // Notice we added SpriteProvider here
+    private final float r1, g1, b1, r2, g2, b2;
+    private final float orbX, orbY, orbZ;
+    private final boolean rotate;
+    private final float rotSpeed;
+
     protected OmniParticle(ClientWorld world, double x, double y, double z,
                            double velocityX, double velocityY, double velocityZ,
-                           float red, float green, float blue, float scale, float gravity, int lifetime,
+                           OmniParticleEffect params,
                            SpriteProvider spriteProvider) {
         super(world, x, y, z, velocityX, velocityY, velocityZ);
 
         this.velocityX = velocityX; this.velocityY = velocityY; this.velocityZ = velocityZ;
-        this.setColor(red, green, blue);
-        this.scale = scale;
-        this.gravityStrength = gravity;
 
-        // --- ADD THESE TWO LINES ---
-        // Give it a random starting rotation (0 to 360 degrees in radians)
-        this.angle = this.random.nextFloat() * ((float)Math.PI * 2F);
-        this.prevAngle = this.angle;
-        // ---------------------------
+        // Store color start/end
+        this.r1 = params.r1(); this.g1 = params.g1(); this.b1 = params.b1();
+        this.r2 = params.r2(); this.g2 = params.g2(); this.b2 = params.b2();
 
-        this.maxAge = lifetime;
+        this.orbX = params.orbX(); this.orbY = params.orbY(); this.orbZ = params.orbZ();
+        this.rotate = params.rotate();
+
+        // Initialize at Start Color
+        this.setColor(r1, g1, b1);
+
+        this.scale = params.scale();
+        this.gravityStrength = params.gravity();
+        this.maxAge = params.lifetime();
         this.alpha = 1.0f;
         this.setSprite(spriteProvider);
+
+        // Rotation Init
+        if (this.rotate) {
+            this.angle = this.random.nextFloat() * ((float)Math.PI * 2F);
+            // Random spin speed between -0.1 and 0.1 rad/tick
+            this.rotSpeed = (this.random.nextFloat() - 0.5f) * 0.2f;
+        } else {
+            this.angle = 0;
+            this.rotSpeed = 0;
+        }
+        this.prevAngle = this.angle;
     }
 
     @Override
@@ -40,13 +60,39 @@ public class OmniParticle extends SpriteBillboardParticle {
     @Override
     public void tick() {
         super.tick();
+
+        // 1. Color Interpolation
+        float progress = (float)this.age / this.maxAge;
+        float cr = MathHelper.lerp(progress, r1, r2);
+        float cg = MathHelper.lerp(progress, g1, g2);
+        float cb = MathHelper.lerp(progress, b1, b2);
+        this.setColor(cr, cg, cb);
+
+        // 2. Alpha Fadeout (last 20%)
         if (this.age > this.maxAge - (this.maxAge * 0.2f)) {
             this.alpha = 1.0f - ((float)(this.age - (this.maxAge * 0.2f)) / (this.maxAge * 0.2f));
         }
+
+        // 3. Lifetime Rotation
+        if (this.rotate) {
+            this.prevAngle = this.angle;
+            this.angle += this.rotSpeed;
+        }
+
+        // 4. Orbital Velocity (Rotate Velocity Vector)
+        if (orbX != 0 || orbY != 0 || orbZ != 0) {
+            Vector3f vel = new Vector3f((float)this.velocityX, (float)this.velocityY, (float)this.velocityZ);
+            // Apply rotations
+            if (orbX != 0) vel.rotateX(orbX);
+            if (orbY != 0) vel.rotateY(orbY);
+            if (orbZ != 0) vel.rotateZ(orbZ);
+
+            this.velocityX = vel.x;
+            this.velocityY = vel.y;
+            this.velocityZ = vel.z;
+        }
     }
 
-    // --- THE FACTORY ---
-    // Minecraft uses this to connect your custom data to the visual particle
     public static class Factory implements ParticleFactory<OmniParticleEffect> {
         private final SpriteProvider spriteProvider;
 
@@ -59,8 +105,7 @@ public class OmniParticle extends SpriteBillboardParticle {
                                        double x, double y, double z,
                                        double velocityX, double velocityY, double velocityZ) {
             return new OmniParticle(world, x, y, z, velocityX, velocityY, velocityZ,
-                    parameters.red(), parameters.green(), parameters.blue(),
-                    parameters.scale(), parameters.gravity(), parameters.lifetime(), // <-- Pass lifetime here
+                    parameters, // Pass the whole effect object
                     this.spriteProvider);
         }
     }
