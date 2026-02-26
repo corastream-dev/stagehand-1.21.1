@@ -1,3 +1,4 @@
+/*
 package corablue.stagehand.mixin;
 
 import corablue.stagehand.world.ModDimensions;
@@ -48,3 +49,5 @@ public abstract class SafetyNetMixin {
         }
     }
 }
+
+ */

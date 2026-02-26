@@ -9,6 +9,7 @@ import corablue.stagehand.network.ModNetwork;
 import corablue.stagehand.screen.ModScreenHandlers;
 import corablue.stagehand.sound.ModSounds;
 import corablue.stagehand.world.ModDimensions;
+import corablue.stagehand.world.StageDeathOverride;
 import corablue.stagehand.world.StageManager;
 import net.fabricmc.api.ModInitializer;
 
@@ -52,6 +53,7 @@ public class Stagehand implements ModInitializer {
 		ModNetwork.init();
 		ModDimensions.register();
 		ModScreenHandlers.registerScreenHandlers();
+		StageDeathOverride.registerStageDeathOverride();
 
 		//Admin can now set Stages as worldspawns!
 		//Detect new players and...
