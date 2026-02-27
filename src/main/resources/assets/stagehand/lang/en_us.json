@@ -5,6 +5,7 @@
   "block.stagehand.stage_return": "Stage Exit",
   "block.stagehand.stage_config": "Stage Configurator",
   "block.stagehand.particle_emitter": "Particle Emitter",
+  "block.stagehand.lore_anvil": "Lore Desk",
 
 
   "ui.stagehand.selected": "Selected: ",

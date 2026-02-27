@@ -26,22 +26,18 @@ public abstract class SafetyNetMixin {
             if (player.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
 
                 // 3. Attempt Rescue
-                // We use your existing handler. 
-                // Note: The handler MUST heal the player (setHealth) for this to work, 
-                // otherwise they will just die again in the next tick.
                 boolean rescued = StageReturnHandler.returnPlayer(player, StageReturnHandler.FallbackMode.RESPAWN_POINT);
 
                 if (rescued) {
-                    // 4. Effects (Sound/Flash)
-                    player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
-                            ModSounds.TELEPORT_FIRE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                    //Set health to stop death logic
+                    player.setHealth(player.getMaxHealth());
+                    player.clearStatusEffects();
 
-                    ServerPlayNetworking.send(player, new FlashScreenPayload());
+                    // 2. Schedule the teleport for the next tick to avoid recursion/crash
+                    player.getServer().execute(() -> {
+                        StageReturnHandler.returnPlayer(player, StageReturnHandler.FallbackMode.RESPAWN_POINT);
+                    });
 
-                    // 5. CRITICAL: Tell the game "We handled the death"
-                    // Returning 'true' makes the game think a Totem was used successfully,
-                    // so it stops the death process. 
-                    // Since we injected at HEAD, the vanilla code that consumes the item never runs.
                     cir.setReturnValue(true);
                 }
             }

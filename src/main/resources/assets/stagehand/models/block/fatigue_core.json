@@ -1,7 +1,8 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/orientable",
   "textures": {
-    "end": "stagehand:block/fatigue_core_top",
-    "side": "stagehand:block/fatigue_core_front"
+    "front": "stagehand:block/fatigue_core_front",
+    "side": "stagehand:block/fatigue_core_top",
+    "top": "stagehand:block/fatigue_core_top"
   }
 }

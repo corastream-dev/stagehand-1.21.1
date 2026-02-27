@@ -25,7 +25,8 @@ public class ModBlocks {
     public static final Block LORE_ANVIL_BLOCK = registerBlock("lore_anvil",
             new LoreAnvilBlock(AbstractBlock.Settings.create()
                     .strength(1)
-                    .requiresTool()));
+                    .requiresTool()
+                    .nonOpaque()));
 
     public static final Block FATIGUE_CORE_BLOCK = registerBlock("fatigue_core",
             new FatigueCoreBlock(AbstractBlock.Settings.create()

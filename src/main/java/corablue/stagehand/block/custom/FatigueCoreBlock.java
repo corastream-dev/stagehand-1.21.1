@@ -3,6 +3,7 @@ package corablue.stagehand.block.custom;
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities; // Make sure this matches your registry package!
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -11,11 +12,16 @@ import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,9 +30,23 @@ import net.minecraft.client.MinecraftClient;
 
 public class FatigueCoreBlock extends BlockWithEntity {
     public static final MapCodec<FatigueCoreBlock> CODEC = createCodec(FatigueCoreBlock::new);
+    public static final DirectionProperty FACING = Properties.FACING;
 
     public FatigueCoreBlock(Settings settings) {
         super(settings);
+        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    @Nullable
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext ctx) {
+        // getOpposite() makes the "front" face the player when placed
+        return this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite());
     }
 
     @Override

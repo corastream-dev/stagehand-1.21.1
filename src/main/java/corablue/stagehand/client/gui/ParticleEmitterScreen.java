@@ -168,9 +168,9 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
         list.child(Containers.verticalFlow(Sizing.fill(80), Sizing.fixed(1)).surface(Surface.flat(BORDER_COLOR)).margins(Insets.vertical(8)));
 
         // -- BEHAVIOR & TIMING --
-        addStandaloneSlider(list, "Scale", 0.1f, 2.0f, scale, val -> { scale = val; applyChangesLive(); });
+        addStandaloneSlider(list, "Scale", 0.05f, 1.0f, scale, val -> { scale = val; applyChangesLive(); });
         addStandaloneSlider(list, "Gravity", -1f, 1f, gravity, val -> { gravity = val; applyChangesLive(); });
-        addStandaloneFloatSlider(list, "Spawn/Tick", 0.1, 20.0, spawnRate, 2.0, val -> { spawnRate = val; applyChangesLive(); });
+        addStandaloneFloatSlider(list, "Amount", 0.1, 20.0, spawnRate, 2.0, val -> { spawnRate = val; applyChangesLive(); });
         addStandaloneIntSlider(list, "Lifetime", 1, 120, lifetime, val -> { lifetime = val; applyChangesLive(); });
 
         // Toggles

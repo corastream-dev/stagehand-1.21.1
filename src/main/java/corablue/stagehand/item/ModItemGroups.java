@@ -23,6 +23,7 @@ public class ModItemGroups {
                         entries.add(ModBlocks.PARTICLE_EMITTER_BLOCK);
                         entries.add(ModBlocks.STAGE_PROJECTOR_BLOCK);
                         entries.add(ModBlocks.STAGE_RETURN_BLOCK);
+                        entries.add(ModBlocks.LORE_ANVIL_BLOCK);
                     })
                     .build());
 

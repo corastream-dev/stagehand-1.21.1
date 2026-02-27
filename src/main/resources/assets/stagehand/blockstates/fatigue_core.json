@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
-      "model": "stagehand:block/fatigue_core"
-    }
+    "facing=north": { "model": "stagehand:block/fatigue_core" },
+    "facing=south": { "model": "stagehand:block/fatigue_core", "y": 180 },
+    "facing=west":  { "model": "stagehand:block/fatigue_core", "y": 270 },
+    "facing=east":  { "model": "stagehand:block/fatigue_core", "y": 90 },
+    "facing=down":  { "model": "stagehand:block/fatigue_core", "x": 90 },
+    "facing=up":    { "model": "stagehand:block/fatigue_core", "x": -90 }
   }
 }

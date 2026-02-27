@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "real",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:painting"
+    },
+    {
+      "item": "minecraft:dirt"
+    }
+  ],
+  "result": {
+    "id": "stagehand:stage_return",
+    "count": 1
+  }
+}

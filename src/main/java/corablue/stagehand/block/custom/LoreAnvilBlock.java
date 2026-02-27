@@ -5,11 +5,16 @@ import corablue.stagehand.block.entity.LoreAnvilBlockEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
@@ -18,18 +23,26 @@ import org.jetbrains.annotations.Nullable;
 
 public class LoreAnvilBlock extends BlockWithEntity {
     public static final MapCodec<LoreAnvilBlock> CODEC = createCodec(LoreAnvilBlock::new);
+    public static final DirectionProperty FACING = Properties.FACING;
 
-    private static final VoxelShape SHAPE = VoxelShapes.union(
-            Block.createCuboidShape(2, 0, 2, 14, 4, 14),
-            Block.createCuboidShape(4, 4, 5, 12, 5, 11),
-            Block.createCuboidShape(6, 5, 6, 10, 10, 10),
-            Block.createCuboidShape(3, 10, 0, 13, 16, 16)
-    );
+    public LoreAnvilBlock(Settings settings) {
+        super(settings);
+        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
+    }
 
-    public LoreAnvilBlock(Settings settings) { super(settings); }
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    @Nullable
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext ctx) {
+        // getOpposite() makes the "front" face the player when placed
+        return this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite());
+    }
 
     @Override protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
-    @Override public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) { return SHAPE; }
     @Override public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
 
     @Nullable

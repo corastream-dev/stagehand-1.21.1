@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "real",
+  "category": "misc",
+  "pattern": [
+    "STB",
+    "IPI",
+    "III"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:copper_bulb"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "S": {
+      "item": "minecraft:calibrated_sculk_sensor"
+    },
+    "T": {
+      "item": "minecraft:iron_trapdoor"
+    },
+    "P": {
+      "item": "minecraft:painting"
+    }
+  },
+  "result": {
+    "id": "stagehand:stage_projector",
+    "count": 1
+  }
+}

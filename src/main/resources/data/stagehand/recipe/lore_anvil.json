@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "real",
+  "ingredients": [
+    {
+      "item": "minecraft:writable_book"
+    },
+    {
+      "item": "minecraft:anvil"
+    }
+  ],
+  "result": {
+    "id": "stagehand:lore_anvil",
+    "count": 1
+  }
+}

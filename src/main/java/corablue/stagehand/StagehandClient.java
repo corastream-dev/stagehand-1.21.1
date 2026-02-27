@@ -1,15 +1,18 @@
 package corablue.stagehand;
 
+import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.client.gui.LoreAnvilScreen;
 import corablue.stagehand.client.model.ModModelLayers;
 import corablue.stagehand.network.FlashScreenPayload;
 import corablue.stagehand.particles.ModParticles;
 import corablue.stagehand.screen.ModScreenHandlers;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.render.RenderLayer;
 
 public class StagehandClient implements ClientModInitializer {
     public static float flashAlpha = 0.0f;
@@ -17,6 +20,7 @@ public class StagehandClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
+        BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.LORE_ANVIL_BLOCK, RenderLayer.getCutout());
         HandledScreens.register(ModScreenHandlers.LORE_ANVIL, LoreAnvilScreen::new);
         ModModelLayers.registerModelLayers();
 

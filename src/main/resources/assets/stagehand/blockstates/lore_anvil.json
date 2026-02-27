@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": { "model": "stagehand:block/lore_anvil", "y": 90 },
+    "facing=south": { "model": "stagehand:block/lore_anvil", "y": 270 },
+    "facing=west":  { "model": "stagehand:block/lore_anvil", "y": 0 },
+    "facing=east":  { "model": "stagehand:block/lore_anvil", "y": 180 },
+    "facing=down":  { "model": "stagehand:block/lore_anvil"},
+    "facing=up":    { "model": "stagehand:block/lore_anvil"}
+  }
+}

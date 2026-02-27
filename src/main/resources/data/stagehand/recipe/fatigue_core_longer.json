@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "real",
+  "category": "misc",
+  "pattern": [
+    " w ",
+    "pSp",
+    " p "
+  ],
+  "key": {
+    "p": {
+      "item": "minecraft:prismarine_shard"
+    },
+    "S": [
+      {
+        "item": "minecraft:sponge"
+      },
+      {
+        "item": "minecraft:wet_sponge"
+      }
+    ],
+    "w": {
+      "fabric:type": "fabric:components",
+      "base": {
+        "item": "minecraft:potion"
+      },
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:long_weakness"
+        }
+      }
+    }
+  },
+  "result": {
+    "id": "stagehand:fatigue_core",
+    "count": 1
+  }
+}

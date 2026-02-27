@@ -1,5 +1,6 @@
 package corablue.stagehand.client.particle;
 
+import corablue.stagehand.particles.ModParticles;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleFactory;
 import net.minecraft.client.particle.ParticleTextureSheet;
@@ -51,6 +52,11 @@ public class OmniParticle extends SpriteBillboardParticle {
         this.setColor(r1, g1, b1);
 
         this.scale = params.scale();
+
+        if (params.getType() == ModParticles.OMNI_FOG) {
+            this.scale *= 6.0f; // Boost fog size by 6X
+        }
+
         this.gravityStrength = params.gravity();
         this.maxAge = params.lifetime();
         this.alpha = 1.0f;

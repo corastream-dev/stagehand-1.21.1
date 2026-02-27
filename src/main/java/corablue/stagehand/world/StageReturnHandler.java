@@ -1,9 +1,13 @@
 package corablue.stagehand.world;
 
+import corablue.stagehand.network.FlashScreenPayload;
+import corablue.stagehand.sound.ModSounds;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -77,23 +81,29 @@ public class StageReturnHandler {
     }
 
     private static void executeTeleport(ServerPlayerEntity player, ServerWorld world, double x, double y, double z, float yaw, float pitch) {
-
-        //Make sure we don't die
+        // 1. Reset state BEFORE teleport
         player.setHealth(player.getMaxHealth());
         player.extinguish();
+        player.getAbilities().invulnerable = true; // Temporary safety
         player.setVelocity(0, 0, 0);
         player.fallDistance = 0.0f;
 
-        //If the destination is NOT the stage dimension...
-        if (!world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
+        // 2. Perform Teleport
+        player.teleport(world, x, y, z, yaw, pitch);
 
-            //...don't leave them stuck in Adventure Mode in the real world
-            if (Objects.requireNonNull(player.interactionManager.getGameMode()) == GameMode.ADVENTURE) {
+        // 3. Update GameMode AFTER teleport is confirmed
+        if (!world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
+            if (player.interactionManager.getGameMode() == GameMode.ADVENTURE) {
                 player.changeGameMode(GameMode.SURVIVAL);
             }
         }
 
-        // Perform the teleport
-        player.teleport(world, x, y, z, yaw, pitch);
+        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                ModSounds.TELEPORT_FIRE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+
+        ServerPlayNetworking.send(player, new FlashScreenPayload());
+
+        player.getAbilities().invulnerable = false;
+        player.sendAbilitiesUpdate();
     }
 }
