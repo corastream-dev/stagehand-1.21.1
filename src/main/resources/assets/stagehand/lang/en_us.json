@@ -7,7 +7,6 @@
   "block.stagehand.particle_emitter": "Particle Emitter",
   "block.stagehand.lore_anvil": "Lore Desk",
 
-
   "ui.stagehand.selected": "Selected: ",
   "sound.stagehand.ambience_electric_hum": "Electric Hum",
   "sound.stagehand.ambience_industrial_hum": "Industrial Hum",
@@ -36,5 +35,68 @@
   "sound.stagehand.ambience_dripping": "Dripping Water",
   "sound.stagehand.ambience_forcefield": "Forcefield Hum",
 
-  "itemgroup.stagehand.stagehand_blocks": "Stagehand Blocks"
+  "itemgroup.stagehand.stagehand_blocks": "Stagehand Blocks",
+
+  "command.stagehand.hub_set": "Global Stage Hub has been set to your current location!",
+  "command.stagehand.not_in_stage": "You are not currently in a Stage!",
+  "command.stagehand.return_error": "§cError: Could not find a safe return location!",
+  "command.stagehand.fatigue_info": "§eYou are in a Fatigue Zone. Type /ignorefatigue to opt out.",
+  "command.stagehand.fatigue_opt_out": "You have successfully opted out of this Fatigue Zone. Type /resumefatigue to opt back in.",
+  "command.stagehand.fatigue_opt_in": "You have opted back into this Fatigue Zone.",
+  "command.stagehand.not_in_fatigue": "You are not currently inside a Fatigue Zone.",
+
+  "ui.stagehand.ambience_speaker.range": "Range",
+  "ui.stagehand.ambience_speaker.play": "▶ Play",
+  "ui.stagehand.ambience_speaker.stop": "⏹ Stop",
+  "ui.stagehand.ambience_speaker.not_owner": "§cYou do not own this Ambience Speaker.",
+  "ui.stagehand.ambience_speaker.overworld_disabled": "§cAmbience Speakers can only be placed in The Stage.",
+
+  "ui.stagehand.fatigue_core.range": "Range: %s",
+  "ui.stagehand.fatigue_core.affect_owner": "Affect Owner: %s",
+  "ui.stagehand.generic.yes": "YES",
+  "ui.stagehand.generic.no": "NO",
+  "ui.stagehand.fatigue_core.not_owner": "You do not own this Fatigue Core.",
+
+  "ui.stagehand.lore_anvil.name_placeholder": "Name",
+  "ui.stagehand.lore_anvil.lore_placeholder": "Lore %s",
+  "ui.stagehand.lore_anvil.none": "None",
+
+  "ui.stagehand.particle_emitter.title": "Particle Emitter Settings",
+  "ui.stagehand.particle_emitter.color_mode.lifetime": "Color Mode: Lifetime",
+  "ui.stagehand.particle_emitter.color_mode.random": "Color Mode: Random",
+  "ui.stagehand.particle_emitter.rotates": "Rotates",
+  "ui.stagehand.particle_emitter.emissive": "Emissive",
+  "ui.stagehand.particle_emitter.start": "Start",
+  "ui.stagehand.particle_emitter.end": "End",
+  "ui.stagehand.particle_emitter.scale": "Scale",
+  "ui.stagehand.particle_emitter.gravity": "Gravity",
+  "ui.stagehand.particle_emitter.amount": "Amount",
+  "ui.stagehand.particle_emitter.lifetime": "Lifetime",
+  "ui.stagehand.particle_emitter.offset": "Offset",
+  "ui.stagehand.particle_emitter.spread": "Spread",
+  "ui.stagehand.particle_emitter.min_vel": "Min Vel",
+  "ui.stagehand.particle_emitter.max_vel": "Max Vel",
+  "ui.stagehand.particle_emitter.spin": "Spin",
+  "ui.stagehand.generic.done": "Done",
+  "ui.stagehand.particle_emitter.not_owner": "§cYou do not own this Particle Emitter.",
+  "ui.stagehand.particle_emitter.overworld_disabled": "§cParticle Emitters can only be placed in The Stage.",
+
+  "ui.stagehand.stage_config.title": "Stage Configuration",
+  "ui.stagehand.stage_config.status": "Status: %s",
+  "ui.stagehand.stage_config.status.ready": "READY",
+  "ui.stagehand.stage_config.status.not_ready": "NOT READY",
+  "ui.stagehand.stage_config.whitelist": "Builder Whitelist",
+  "ui.stagehand.stage_config.save": "Save Settings",
+  "ui.stagehand.stage_config.mode": "Mode: %s",
+  "ui.stagehand.stage_config.exit": "Exit Stage",
+  "ui.stagehand.stage_config.no_auth": "§cOnly owners and whitelisted builders can use this terminal.",
+
+  "ui.stagehand.stage_projector.relinked": "§aProjector successfully relinked to Stage Key: §e %s",
+  "ui.stagehand.stage_projector.linked": "§7Projector linked to default personal Stage.",
+  "ui.stagehand.stage_projector.not_owner": "§cOnly the owner can relink this projector.",
+  "ui.stagehand.stage_projector.linked_custom": "§aProjector linked to custom Stage: §e %s",
+  "ui.stagehand.stage_projector.welcome_builder": "§aStage Access: Builder",
+  "ui.stagehand.stage_projector.welcome_visitor": "§7Stage Access: Visitor (Adventure Mode)",
+  "ui.stagehand.stage_projector.spectator_warning": "§cYou are in Spectator Mode! Leave Spectator Mode to toggle Adventure Mode.",
+  "ui.stagehand.stage_projector.creative_warning": "§cYou are in Creative Mode! Leave Creative Mode to toggle Adventure Mode."
 }

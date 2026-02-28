@@ -85,7 +85,7 @@ public class FatigueCoreBlock extends BlockWithEntity {
             // process ghost interactions, and the client doesn't open the GUI.
             if (!fatigueCore.isOwner(player)) {
                 if (!world.isClient) {
-                    player.sendMessage(Text.literal("§cYou do not own this Fatigue Core."), true);
+                    player.sendMessage(Text.translatable("ui.stagehand.fatigue_core.not_owner"), true);
                 }
                 return ActionResult.SUCCESS;
             }

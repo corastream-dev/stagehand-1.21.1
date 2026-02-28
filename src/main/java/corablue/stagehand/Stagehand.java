@@ -123,7 +123,7 @@ public class Stagehand implements ModInitializer {
 						if (player == null) return 0;
 						StageManager manager = StageManager.getServerState(player.getServer());
 						manager.setGlobalHub(player.getWorld().getRegistryKey().getValue().toString(), player.getBlockPos());
-						player.sendMessage(Text.literal("§aGlobal Stage Hub has been set to your current location!"), false);
+						player.sendMessage(Text.translatable("command.stagehand.hub_set"), false);
 						return 1;
 					}));
 
@@ -132,14 +132,14 @@ public class Stagehand implements ModInitializer {
 						ServerPlayerEntity player = context.getSource().getPlayer();
 						if (player == null) return 0;
 						if (!player.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
-							player.sendMessage(Text.literal("§cYou are not currently in a Stage!"), false);
+							player.sendMessage(Text.translatable("command.stagehand.not_in_stage"), false);
 							return 0;
 						}
 						// isDeath = false
 						if (corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FAIL)) {
 							return 1;
 						} else {
-							player.sendMessage(Text.literal("§cError: Could not find a safe return location!"), false);
+							player.sendMessage(Text.translatable("command.stagehand.return_error"), false);
 							return 0;
 						}
 					}));
@@ -150,6 +150,7 @@ public class Stagehand implements ModInitializer {
 					.executes(context -> {
 						ServerPlayerEntity player = context.getSource().getPlayer();
 						if (player == null) return 0;
+						if (!CONFIG.AllowFatigueZoneOptout()) return 0;
 						boolean successfullyOptedOut = false;
 						for (FatigueCoreBlockEntity core : FatigueCoreBlockEntity.ACTIVE_CORES) {
 							if (core.getWorld() == player.getWorld()) {
@@ -160,9 +161,9 @@ public class Stagehand implements ModInitializer {
 							}
 						}
 						if (successfullyOptedOut) {
-							player.sendMessage(Text.literal("§aYou have successfully opted out of this Fatigue Zone. Type /resumefatigue to opt back in."), false);
+							player.sendMessage(Text.translatable("command.stagehand.fatigue_opt_out"), false);
 						} else {
-							player.sendMessage(Text.literal("§cYou are not currently inside a Fatigue Zone."), false);
+							player.sendMessage(Text.translatable("command.stagehand.not_in_fatigue"), false);
 						}
 						return 1;
 					}));
@@ -182,9 +183,9 @@ public class Stagehand implements ModInitializer {
 							}
 						}
 						if (successfullyOptedIn) {
-							player.sendMessage(Text.literal("§aYou have opted back into this Fatigue Zone."), false);
+							player.sendMessage(Text.translatable("command.stagehand.fatigue_opt_in"), false);
 						} else {
-							player.sendMessage(Text.literal("§cYou are not currently inside a Fatigue Zone."), false);
+							player.sendMessage(Text.translatable("command.stagehand.not_in_fatigue\""), false);
 						}
 						return 1;
 					}));

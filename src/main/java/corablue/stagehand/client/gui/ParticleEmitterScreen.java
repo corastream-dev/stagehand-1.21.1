@@ -91,7 +91,7 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
         FlowLayout mainCard = Containers.verticalFlow(Sizing.fill(100), Sizing.content());
         mainCard.padding(Insets.of(12)).surface(Surface.flat(MAIN_BACKGROUND)).horizontalAlignment(HorizontalAlignment.CENTER);
 
-        mainCard.child(Components.label(Text.literal("Particle Emitter Settings")).shadow(true).color(Color.ofRgb(TITLE_TEXT)).margins(Insets.bottom(10)));
+        mainCard.child(Components.label(Text.translatable("ui.stagehand.particle_emitter.title")).shadow(true).color(Color.ofRgb(TITLE_TEXT)).margins(Insets.bottom(10)));
 
         // --- PARTICLE SELECTOR GRID ---
         FlowLayout particleGrid = Containers.verticalFlow(Sizing.fill(100), Sizing.content());
@@ -150,10 +150,12 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
 
         // -- COLOR SETTINGS --
         ButtonComponent colorModeBtn = Components.button(
-                Text.literal(useLifetimeColor ? "Color Mode: Lifetime" : "Color Mode: Random"),
+                useLifetimeColor ? Text.translatable("ui.stagehand.particle_emitter.color_mode.lifetime")
+                        : Text.translatable("ui.stagehand.particle_emitter.color_mode.random"),
                 button -> {
                     useLifetimeColor = !useLifetimeColor;
-                    button.setMessage(Text.literal(useLifetimeColor ? "Color Mode: Lifetime" : "Color Mode: Random"));
+                    button.setMessage(useLifetimeColor ? Text.translatable("ui.stagehand.particle_emitter.color_mode.lifetime")
+                            : Text.translatable("ui.stagehand.particle_emitter.color_mode.random"));
                     applyChangesLive();
                 }
         );
@@ -161,28 +163,29 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
         colorModeBtn.renderer(ButtonComponent.Renderer.flat(BUTTON_BASE, BUTTON_HOVER, ACCENT));
         list.child(colorModeBtn.margins(Insets.bottom(8).top(4)));
 
-        addHeader(list, "R", "G", "B"); // Print RGB header once
-        setupColorRow(list, "Start", c1R, val -> c1R = val, c1G, val -> c1G = val, c1B, val -> c1B = val);
-        setupColorRow(list, "End", c2R, val -> c2R = val, c2G, val -> c2G = val, c2B, val -> c2B = val);
+// Letters like R, G, B, X, Y, Z are universally understood, so keeping them hardcoded is standard practice!
+        addHeader(list, "R", "G", "B");
+        setupColorRow(list, Text.translatable("ui.stagehand.particle_emitter.start").getString(), c1R, val -> c1R = val, c1G, val -> c1G = val, c1B, val -> c1B = val);
+        setupColorRow(list, Text.translatable("ui.stagehand.particle_emitter.end").getString(), c2R, val -> c2R = val, c2G, val -> c2G = val, c2B, val -> c2B = val);
 
         list.child(Containers.verticalFlow(Sizing.fill(80), Sizing.fixed(1)).surface(Surface.flat(BORDER_COLOR)).margins(Insets.vertical(8)));
 
-        // -- BEHAVIOR & TIMING --
-        addStandaloneSlider(list, "Scale", 0.05f, 1.0f, scale, val -> { scale = val; applyChangesLive(); });
-        addStandaloneSlider(list, "Gravity", -1f, 1f, gravity, val -> { gravity = val; applyChangesLive(); });
-        addStandaloneFloatSlider(list, "Amount", 0.1, 20.0, spawnRate, 2.0, val -> { spawnRate = val; applyChangesLive(); });
-        addStandaloneIntSlider(list, "Lifetime", 1, 120, lifetime, val -> { lifetime = val; applyChangesLive(); });
+// -- BEHAVIOR & TIMING --
+        addStandaloneSlider(list, Text.translatable("ui.stagehand.particle_emitter.scale").getString(), 0.05f, 1.0f, scale, val -> { scale = val; applyChangesLive(); });
+        addStandaloneSlider(list, Text.translatable("ui.stagehand.particle_emitter.gravity").getString(), -1f, 1f, gravity, val -> { gravity = val; applyChangesLive(); });
+        addStandaloneFloatSlider(list, Text.translatable("ui.stagehand.particle_emitter.amount").getString(), 0.1, 20.0, spawnRate, 2.0, val -> { spawnRate = val; applyChangesLive(); });
+        addStandaloneIntSlider(list, Text.translatable("ui.stagehand.particle_emitter.lifetime").getString(), 1, 120, lifetime, val -> { lifetime = val; applyChangesLive(); });
 
-        // Toggles
+// Toggles
         FlowLayout toggleRow = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
         toggleRow.horizontalAlignment(HorizontalAlignment.CENTER).margins(Insets.vertical(6));
 
-        CheckboxComponent rotateBox = Components.checkbox(Text.literal("Rotates"));
+        CheckboxComponent rotateBox = Components.checkbox(Text.translatable("ui.stagehand.particle_emitter.rotates"));
         rotateBox.checked(rotate);
         rotateBox.onChanged(checked -> { rotate = checked; applyChangesLive(); });
         toggleRow.child(rotateBox.margins(Insets.right(20)));
 
-        CheckboxComponent emissiveBox = Components.checkbox(Text.literal("Emissive"));
+        CheckboxComponent emissiveBox = Components.checkbox(Text.translatable("ui.stagehand.particle_emitter.emissive"));
         emissiveBox.checked(emissive);
         emissiveBox.onChanged(checked -> { emissive = checked; applyChangesLive(); });
         toggleRow.child(emissiveBox);
@@ -191,19 +194,19 @@ public class ParticleEmitterScreen extends BaseOwoScreen<FlowLayout> {
 
         list.child(Containers.verticalFlow(Sizing.fill(80), Sizing.fixed(1)).surface(Surface.flat(BORDER_COLOR)).margins(Insets.vertical(8)));
 
-        // -- VECTOR SETTINGS --
+// -- VECTOR SETTINGS --
         addHeader(list, "X", "Y", "Z"); // Print XYZ header once
-        setupCoordRow(list, "Offset", oX, val -> oX = val, oY, val -> oY = val, oZ, val -> oZ = val);
-        setupCoordRow(list, "Spread", aX, val -> aX = val, aY, val -> aY = val, aZ, val -> aZ = val);
-        setupCoordRow(list, "Min Vel", minVX, val -> minVX = val, minVY, val -> minVY = val, minVZ, val -> minVZ = val);
-        setupCoordRow(list, "Max Vel", maxVX, val -> maxVX = val, maxVY, val -> maxVY = val, maxVZ, val -> maxVZ = val);
-        setupCoordRow(list, "Spin", orbX, val -> orbX = val, orbY, val -> orbY = val, orbZ, val -> orbZ = val);
+        setupCoordRow(list, Text.translatable("ui.stagehand.particle_emitter.offset").getString(), oX, val -> oX = val, oY, val -> oY = val, oZ, val -> oZ = val);
+        setupCoordRow(list, Text.translatable("ui.stagehand.particle_emitter.spread").getString(), aX, val -> aX = val, aY, val -> aY = val, aZ, val -> aZ = val);
+        setupCoordRow(list, Text.translatable("ui.stagehand.particle_emitter.min_vel").getString(), minVX, val -> minVX = val, minVY, val -> minVY = val, minVZ, val -> minVZ = val);
+        setupCoordRow(list, Text.translatable("ui.stagehand.particle_emitter.max_vel").getString(), maxVX, val -> maxVX = val, maxVY, val -> maxVY = val, maxVZ, val -> maxVZ = val);
+        setupCoordRow(list, Text.translatable("ui.stagehand.particle_emitter.spin").getString(), orbX, val -> orbX = val, orbY, val -> orbY = val, orbZ, val -> orbZ = val);
 
         ScrollContainer<FlowLayout> scroll = Containers.verticalScroll(Sizing.fill(100), Sizing.fixed(180), list);
         scroll.surface(Surface.flat(SCROLL_BACKGROUND)).padding(Insets.of(5)).margins(Insets.bottom(10));
         mainCard.child(scroll);
 
-        ButtonComponent doneBtn = Components.button(Text.literal("Done").styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))), button -> this.close());
+        ButtonComponent doneBtn = Components.button(Text.translatable("ui.stagehand.generic.done").styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))), button -> this.close());
         doneBtn.sizing(Sizing.fixed(100), Sizing.fixed(20));
         doneBtn.renderer(ButtonComponent.Renderer.flat(BUTTON_BASE, BUTTON_HOVER, ACCENT));
         mainCard.child(doneBtn);

@@ -31,7 +31,7 @@ public class LoreAnvilBlockEntity extends BlockEntity implements ImplementedInve
     }
 
     @Override public DefaultedList<ItemStack> getItems() { return items; }
-    @Override public Text getDisplayName() { return Text.literal("Lore Desk"); }
+    @Override public Text getDisplayName() { return Text.translatable("block.stagehand.lore_anvil"); }
 
     @Override
     public BlockPos getScreenOpeningData(ServerPlayerEntity player) {

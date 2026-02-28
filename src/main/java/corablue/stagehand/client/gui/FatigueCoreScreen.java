@@ -68,7 +68,7 @@ public class FatigueCoreScreen extends BaseOwoScreen<FlowLayout> {
 
         // --- HEADER ---
         mainCard.child(
-                Components.label(Text.literal("Fatigue Core"))
+                Components.label(Text.translatable("block.stagehand.fatigue_core"))
                         .shadow(true)
                         .color(Color.ofRgb(TITLE_TEXT))
                         .margins(Insets.bottom(15))
@@ -77,14 +77,14 @@ public class FatigueCoreScreen extends BaseOwoScreen<FlowLayout> {
         // --- CONTROLS ---
         // Range Button
         ButtonComponent rangeBtn = Components.button(
-                Text.literal("Range: " + currentRange)
+                Text.translatable("ui.stagehand.fatigue_core.range", currentRange)
                         .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 button -> {
                     if (this.currentRange < 8) this.currentRange = 8;
                     else if (this.currentRange < 16) this.currentRange = 16;
                     else this.currentRange = 4;
 
-                    button.setMessage(Text.literal("Range: " + this.currentRange)
+                    button.setMessage(Text.translatable("ui.stagehand.fatigue_core.range", this.currentRange)
                             .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))));
                     sendUpdatePacket();
                 }
@@ -96,11 +96,14 @@ public class FatigueCoreScreen extends BaseOwoScreen<FlowLayout> {
 
         // Affect Owner Button
         ButtonComponent ownerBtn = Components.button(
-                Text.literal("Affect Owner: " + (affectOwner ? "YES" : "NO"))
+                Text.translatable("ui.stagehand.fatigue_core.affect_owner",
+                                affectOwner ? Text.translatable("ui.stagehand.generic.yes") : Text.translatable("ui.stagehand.generic.no"))
                         .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 button -> {
                     this.affectOwner = !this.affectOwner;
-                    button.setMessage(Text.literal("Affect Owner: " + (this.affectOwner ? "YES" : "NO"))
+                    // Update the message dynamically when clicked
+                    button.setMessage(Text.translatable("ui.stagehand.fatigue_core.affect_owner",
+                                    this.affectOwner ? Text.translatable("ui.stagehand.generic.yes") : Text.translatable("ui.stagehand.generic.no"))
                             .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))));
                     sendUpdatePacket();
                 }

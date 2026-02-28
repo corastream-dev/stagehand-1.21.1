@@ -4,12 +4,10 @@ import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
 import corablue.stagehand.block.entity.StageProjectorBlockEntity;
 import corablue.stagehand.world.ModDimensions;
-import corablue.stagehand.world.StageManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -74,11 +72,11 @@ public class StageProjectorBlock extends BlockWithEntity {
             // Check if they renamed the projector in an anvil!
             if (itemStack.contains(net.minecraft.component.DataComponentTypes.CUSTOM_NAME)) {
                 projector.setWorldKey(itemStack.getName().getString());
-                placer.sendMessage(net.minecraft.text.Text.literal("§aProjector linked to custom Stage: §e" + itemStack.getName().getString()));
+                placer.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.linked_custom", itemStack.getName().getString()));
             } else {
                 // Default to their username
                 projector.setWorldKey(placer.getName().getString());
-                placer.sendMessage(net.minecraft.text.Text.literal("§7Projector linked to default personal Stage."));
+                placer.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.linked"));
             }
         }
     }
@@ -95,7 +93,7 @@ public class StageProjectorBlock extends BlockWithEntity {
                     if (projector.isOwner(player) || player.hasPermissionLevel(2)) {
                         String newKey = stack.getName().getString();
                         projector.setWorldKey(newKey);
-                        player.sendMessage(net.minecraft.text.Text.literal("§aProjector successfully relinked to Stage Key: §e" + newKey), false);
+                        player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.relinked", newKey), false);
 
                         // Consume the Name Tag in survival mode
                         if (!player.isCreative()) {
@@ -103,7 +101,7 @@ public class StageProjectorBlock extends BlockWithEntity {
                         }
                         return net.minecraft.util.ItemActionResult.SUCCESS;
                     } else {
-                        player.sendMessage(net.minecraft.text.Text.literal("§cOnly the owner can relink this projector."), true);
+                        player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.not_owner"), true);
                         return net.minecraft.util.ItemActionResult.FAIL;
                     }
                 }
@@ -217,13 +215,13 @@ public class StageProjectorBlock extends BlockWithEntity {
                             if (!player.isCreative() && !player.isSpectator()) {
                                 player.changeGameMode(net.minecraft.world.GameMode.SURVIVAL);
                             }
-                            player.sendMessage(net.minecraft.text.Text.literal("§aStage Access: Builder"), true);
+                            player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.welcome_builder"), true);
                         } else {
                             // Visitor -> Adventure Mode
                             if (!player.isCreative() && !player.isSpectator()) {
                                 player.changeGameMode(net.minecraft.world.GameMode.ADVENTURE);
                             }
-                            player.sendMessage(net.minecraft.text.Text.literal("§7Stage Access: Visitor (Adventure Mode)"), true);
+                            player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.welcome_visitor"), true);
                         }
                     }
 

@@ -20,6 +20,8 @@ public class StagehandConfigModel {
     @RangeConstraint(min = 0, max = 24000)
     public int StageTimeOverride = 6000;
 
+    public boolean AllowFatigueZoneOptout = true;
+
     public boolean StageDeathReturnsToSpawn = false;
 
     public boolean StageDoDaylightCycle = false;

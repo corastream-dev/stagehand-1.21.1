@@ -115,10 +115,10 @@ public class ModNetwork {
                                     player.changeGameMode(GameMode.ADVENTURE);
                                 }
                                 case GameMode.CREATIVE -> {
-                                    player.sendMessage(Text.literal("§cYou are in Creative Mode! Leave Creative Mode to toggle Adventure Mode."));
+                                    player.sendMessage(Text.translatable("ui.stagehand.stage_projector.creative_warning"));
                                 }
                                 case GameMode.SPECTATOR -> {
-                                    player.sendMessage(Text.literal("§cYou are in Spectator Mode! Leave Spectator Mode to toggle Adventure Mode."));
+                                    player.sendMessage(Text.translatable("ui.stagehand.stage_projector.spectator_warning"));
                                 }
                             }
                         }

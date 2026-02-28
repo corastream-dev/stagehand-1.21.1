@@ -87,7 +87,7 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
         if (be instanceof AmbienceSpeakerBlockEntity speaker) {
             if (!speaker.isOwner(player)) {
                 if (!world.isClient) {
-                    player.sendMessage(Text.literal("§cYou do not own this Ambience Speaker."), true);
+                    player.sendMessage(Text.translatable("ui.stagehand.ambience_speaker.not_owner"), true);
                 }
                 return ActionResult.SUCCESS;
             }
@@ -108,7 +108,7 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
         if (Stagehand.CONFIG.OnlyAllowSpeakerInStage() && !world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
             world.breakBlock(pos, true);
             if (placer instanceof PlayerEntity player) {
-                player.sendMessage(Text.literal("§cAmbience Speakers can only be placed in The Stage."), true);
+                player.sendMessage(Text.translatable("ui.stagehand.ambience_speaker.overworld_disabled"), true);
             }
             return;
         }

@@ -54,7 +54,7 @@ public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvi
         // --- 1. NAME FIELD ---
         // Background is at y+18, 16px high. Button is 14px high.
         // (16 - 14) / 2 = 1px offset. So button at y+19.
-        this.nameField = new TextFieldWidget(textRenderer, x + 24, y + 21, 100, 12, Text.literal("Name"));
+        this.nameField = new TextFieldWidget(textRenderer, x + 24, y + 21, 100, 12, Text.translatable("ui.stagehand.lore_anvil.name_placeholder"));
         setupField(this.nameField);
         this.addSelectableChild(this.nameField);
 
@@ -67,7 +67,7 @@ public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvi
         this.loreFields.clear();
         for (int i = 0; i < 2; i++) {
             int rowY = y + 73 + (i * 18); // Matching the background sprite Y
-            TextFieldWidget field = new TextFieldWidget(textRenderer, x + 24, rowY + 3, 100, 12, Text.literal("Lore " + i));
+            TextFieldWidget field = new TextFieldWidget(textRenderer, x + 24, rowY + 3, 100, 12, Text.translatable("ui.stagehand.lore_anvil.lore_placeholder", i));
             setupField(field);
             this.loreFields.add(field);
             this.addSelectableChild(field);
@@ -269,7 +269,7 @@ public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvi
         // Reset Button at bottom
         int resetY = startY + (rows * COLOR_BOX_SIZE) + 2;
         context.fill(startX, resetY, startX + width, resetY + 10, 0xFF404040);
-        context.drawCenteredTextWithShadow(textRenderer, "None", startX + width / 2, resetY + 1, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("ui.stagehand.lore_anvil.none"), startX + width / 2, resetY + 1, 0xFFFFFF);
     }
 
     private List<Formatting> getColors() {

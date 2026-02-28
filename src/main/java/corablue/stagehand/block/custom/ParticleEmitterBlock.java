@@ -96,7 +96,7 @@ public class ParticleEmitterBlock extends BlockWithEntity {
             // Keep your standard Stagehand security check
             if (!emitter.isOwner(player)) {
                 if (!world.isClient) {
-                    player.sendMessage(Text.literal("§cYou do not own this Particle Emitter."), true);
+                    player.sendMessage(Text.translatable("ui.stagehand.particle_emitter.not_owner"), true);
                 }
                 return ActionResult.SUCCESS;
             }
@@ -116,7 +116,7 @@ public class ParticleEmitterBlock extends BlockWithEntity {
         if (Stagehand.CONFIG.OnlyAllowEmitterInStage() && !world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
             world.breakBlock(pos, true);
             if (placer instanceof PlayerEntity player) {
-                player.sendMessage(Text.literal("§cParticle Emitters can only be placed in The Stage."), true);
+                player.sendMessage(Text.translatable("ui.stagehand.particle_emitter.overworld_disabled"), true);
             }
             return;
         }

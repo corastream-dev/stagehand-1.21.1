@@ -89,7 +89,7 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
         header.horizontalAlignment(HorizontalAlignment.CENTER).margins(Insets.bottom(15));
 
         header.child(
-                Components.label(Text.literal("Ambience Speaker"))
+                Components.label(Text.translatable("block.stagehand.ambience_speaker"))
                         .shadow(true)
                         .color(Color.ofRgb(TITLE_TEXT))
                         .margins(Insets.bottom(2))
@@ -191,7 +191,7 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
         FlowLayout rangeRow = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
         rangeRow.verticalAlignment(VerticalAlignment.CENTER);
 
-        rangeRow.child(Components.label(Text.literal("Range")).margins(Insets.right(10)));
+        rangeRow.child(Components.label(Text.translatable("ui.stagehand.ambience_speaker.range")).margins(Insets.right(10)));
 
         TextBoxComponent rangeField = Components.textBox(Sizing.fixed(50), String.valueOf(this.currentRange));
         rangeField.setTextPredicate(s -> s.matches("\\d*"));
@@ -212,7 +212,7 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
         buttonRow.gap(10);
 
         ButtonComponent playBtn = Components.button(
-                Text.literal("▶ Play")
+                Text.translatable("ui.stagehand.ambience_speaker.play")
                         .styled(style -> style.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 btn -> {
                     this.isPlaying = true;
@@ -224,7 +224,7 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
         playBtn.renderer(ButtonComponent.Renderer.flat(BUTTON_BASE, BUTTON_HOVER, PLAY_ACCENT));
 
         ButtonComponent stopBtn = Components.button(
-                Text.literal("⏹ Stop")
+                Text.translatable("ui.stagehand.ambience_speaker.stop")
                         .styled(style -> style.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 btn -> {
                     this.isPlaying = false;

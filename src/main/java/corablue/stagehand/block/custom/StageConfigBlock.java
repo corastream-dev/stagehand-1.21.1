@@ -36,7 +36,7 @@ public class StageConfigBlock extends BlockWithEntity {
 
             // Allow both Owner and Builders to open it
             if (!config.isBuilder(player)) {
-                if (!world.isClient) player.sendMessage(Text.literal("§cOnly the Owner and Builders can access this terminal."), true);
+                if (!world.isClient) player.sendMessage(Text.translatable("ui.stagehand.stage_config.no_auth"), true);
                 return ActionResult.SUCCESS;
             }
 

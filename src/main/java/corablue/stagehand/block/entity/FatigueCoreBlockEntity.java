@@ -75,8 +75,8 @@ public class FatigueCoreBlockEntity extends BlockEntity {
             long currentTime = world.getTime();
             long lastTime = LAST_MESSAGE_TIMES.getOrDefault(uuid, -24000L);
 
-            if (currentTime - lastTime >= 12000) {
-                player.sendMessage(Text.literal("§eYou are in a Fatigue Zone. Type /ignorefatigue to opt out."), false);
+            if (currentTime - lastTime >= 12000 && Stagehand.CONFIG.AllowFatigueZoneOptout()) {
+                player.sendMessage(Text.translatable("command.stagehand.fatigue_info"), false);
                 LAST_MESSAGE_TIMES.put(uuid, currentTime);
             }
         }

@@ -74,7 +74,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
 
         // --- HEADER ---
         mainCard.child(
-                Components.label(Text.literal("Stage Configuration"))
+                Components.label(Text.translatable("ui.stagehand.stage_config.title"))
                         .shadow(true)
                         .color(Color.ofRgb(TITLE_TEXT))
                         .margins(Insets.bottom(15))
@@ -84,11 +84,16 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
         if (isOwner) {
             // Ready Toggle
             ButtonComponent readyBtn = Components.button(
-                    Text.literal("Status: " + (isReady ? "READY" : "NOT READY"))
+                    Text.translatable("ui.stagehand.stage_config.status",
+                                    // Inner translatable passes either READY or NOT READY to the %s
+                                    isReady ? Text.translatable("ui.stagehand.stage_config.status.ready")
+                                            : Text.translatable("ui.stagehand.stage_config.status.not_ready"))
                             .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                     button -> {
                         this.isReady = !this.isReady;
-                        button.setMessage(Text.literal("Status: " + (this.isReady ? "READY" : "NOT READY"))
+                        button.setMessage(Text.translatable("ui.stagehand.stage_config.status",
+                                        this.isReady ? Text.translatable("ui.stagehand.stage_config.status.ready")
+                                                : Text.translatable("ui.stagehand.stage_config.status.not_ready"))
                                 .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))));
                     }
             );
@@ -98,7 +103,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
             mainCard.child(readyBtn);
 
             // Whitelist Input Group
-            mainCard.child(Components.label(Text.literal("Builder Whitelist"))
+            mainCard.child(Components.label(Text.translatable("ui.stagehand.stage_config.whitelist"))
                     .color(Color.ofRgb(SUBTEXT))
                     .margins(Insets.bottom(4)));
 
@@ -110,7 +115,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
 
             // Save Settings Button
             ButtonComponent saveBtn = Components.button(
-                    Text.literal("Save Settings")
+                    Text.translatable("ui.stagehand.stage_config.save")
                             .styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                     button -> sendAction(StageConfigUpdatePacket.StageAction.SAVE)
             );
@@ -127,7 +132,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
         String gmName = net.minecraft.client.MinecraftClient.getInstance().interactionManager.getCurrentGameMode().getName().toUpperCase();
 
         ButtonComponent gmBtn = Components.button(
-                Text.literal("Mode: " + gmName).styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
+                Text.translatable("ui.stagehand.stage_config.mode", gmName).styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 button -> {
                     sendAction(StageConfigUpdatePacket.StageAction.GAMEMODE);
                     this.close();
@@ -138,7 +143,7 @@ public class StageConfigScreen extends BaseOwoScreen<FlowLayout> {
         gmBtn.renderer(ButtonComponent.Renderer.flat(BUTTON_BASE, BUTTON_HOVER, ACCENT));
 
         ButtonComponent backBtn = Components.button(
-                Text.literal("Exit Stage").styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
+                Text.translatable("ui.stagehand.stage_config.exit").styled(s -> s.withColor(TextColor.fromRgb(BUTTON_TEXT))),
                 button -> { sendAction(StageConfigUpdatePacket.StageAction.RETURN); this.close(); }
         );
         backBtn.sizing(Sizing.fill(50), Sizing.fixed(20));
