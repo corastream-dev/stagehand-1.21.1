@@ -21,16 +21,7 @@ public class ModNetwork {
 
         //Lore Anvil Packet
         CHANNEL.registerServerbound(LoreAnvilUpdatePacket.class, (message, access) -> {
-            var player = access.player();
-            var world = player.getWorld();
-            var be = world.getBlockEntity(message.pos());
-
-            if (be instanceof LoreAnvilBlockEntity anvil) {
-                if (player.squaredDistanceTo(message.pos().toCenterPos()) <= 64) {
-                    // Just pass name and lore now
-                    anvil.applyEdit(message.name(), message.lore());
-                }
-            }
+            LoreAnvilUpdatePacket.handle(message, access.player());
         });
 
         // Particle Emitter Packet

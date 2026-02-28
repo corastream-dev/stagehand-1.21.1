@@ -1,0 +1,14 @@
+{
+  "parent": "stagehand:root",
+  "display": {
+    "icon": { "id": "stagehand:lore_anvil" },
+    "title": "Deepest Lore",
+    "description": "Author your first item using a Lore Desk.",
+    "frame": "goal"
+  },
+  "criteria": {
+    "authored": {
+      "trigger": "stagehand:author_item"
+    }
+  }
+}

@@ -21,8 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvilScreenHandler> {
-    private static final Identifier TEXTURE = Identifier.of("minecraft", "textures/gui/container/generic_54.png");
-    private static final Identifier ANVIL_GUI = Identifier.of("minecraft", "textures/gui/container/anvil.png");
+    private static final Identifier TEXTURE = Identifier.of("stagehand", "textures/gui/lore_desk.png");
 
     private TextFieldWidget nameField;
     private final List<TextFieldWidget> loreFields = new ArrayList<>();
@@ -43,37 +42,44 @@ public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvi
     }
 
     @Override
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+    }
+
+    @Override
     protected void init() {
         super.init();
         int x = (width - backgroundWidth) / 2;
         int y = (height - backgroundHeight) / 2;
 
         // --- 1. NAME FIELD ---
-        // x+38 is the texture start, but x+40 puts the text 2px inside the "wall"
-        this.nameField = new TextFieldWidget(textRenderer, x + 40, y + 21, 100, 12, Text.literal("Name"));
+        // Background is at y+18, 16px high. Button is 14px high.
+        // (16 - 14) / 2 = 1px offset. So button at y+19.
+        this.nameField = new TextFieldWidget(textRenderer, x + 24, y + 21, 100, 12, Text.literal("Name"));
         setupField(this.nameField);
         this.addSelectableChild(this.nameField);
 
-        ColorButton nameColorBtn = new ColorButton(x + 150, y + 18);
+        // Aligned to the right of the name box
+        ColorButton nameColorBtn = new ColorButton(x + 135, y + 19);
         this.addDrawableChild(nameColorBtn);
         this.colorButtons.add(nameColorBtn);
 
         // --- 2. LORE FIELDS ---
         this.loreFields.clear();
         for (int i = 0; i < 2; i++) {
-            int rowY = y + 75 + (i * 18);
-            TextFieldWidget field = new TextFieldWidget(textRenderer, x + 40, rowY + 2, 100, 12, Text.literal("Lore " + i));
+            int rowY = y + 73 + (i * 18); // Matching the background sprite Y
+            TextFieldWidget field = new TextFieldWidget(textRenderer, x + 24, rowY + 3, 100, 12, Text.literal("Lore " + i));
             setupField(field);
             this.loreFields.add(field);
             this.addSelectableChild(field);
 
-            ColorButton colorBtn = new ColorButton(x + 150, rowY + 1);
+            // Center the 14px button in the 16px row (rowY + 1)
+            ColorButton colorBtn = new ColorButton(x + 135, rowY + 1);
             this.addDrawableChild(colorBtn);
             this.colorButtons.add(colorBtn);
         }
 
         this.applyButton = ButtonWidget.builder(Text.empty(), button -> sendUpdate())
-                .dimensions(x + 105, y + 44, 18, 18) // Square button to match slot size
+                .dimensions(x + 105, y + 44, 18, 18)
                 .build();
         this.addDrawableChild(this.applyButton);
 
@@ -230,32 +236,53 @@ public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvi
     }
 
     private void renderPicker(DrawContext context, int mouseX, int mouseY) {
-        int startX = activeColorButton.getX() + 16;
+        int startX = activeColorButton.getX() + 18; // Slight gap from button
         int startY = activeColorButton.getY();
+
+        List<Formatting> colors = getColors();
+        int rows = (int) Math.ceil(colors.size() / (double) PICKER_SIZE);
+
         int width = PICKER_SIZE * COLOR_BOX_SIZE;
-        int height = (PICKER_SIZE * COLOR_BOX_SIZE) + 14;
+        int height = (rows * COLOR_BOX_SIZE) + 14;
 
-        context.fill(startX - 2, startY - 2, startX + width + 2, startY + height + 2, 0xFF000000);
-        context.drawBorder(startX - 2, startY - 2, width + 4, height + 4, 0xFFFFFFFF);
+        // Draw Drop Shadow / Background
+        context.fill(startX - 3, startY - 3, startX + width + 3, startY + height + 3, 0xFF000000);
+        context.drawBorder(startX - 3, startY - 3, width + 6, height + 6, 0xFFFFFFFF);
 
-        List<Formatting> colors = Arrays.stream(Formatting.values()).filter(Formatting::isColor).toList();
         for (int i = 0; i < colors.size(); i++) {
             int row = i / PICKER_SIZE;
             int col = i % PICKER_SIZE;
             int boxX = startX + (col * COLOR_BOX_SIZE);
             int boxY = startY + (row * COLOR_BOX_SIZE);
-            context.fill(boxX, boxY, boxX + COLOR_BOX_SIZE - 1, boxY + COLOR_BOX_SIZE - 1, colors.get(i).getColorValue() | 0xFF000000);
+
+            int colorHex = colors.get(i).getColorValue() | 0xFF000000;
+
+            // Draw the color square
+            context.fill(boxX + 1, boxY + 1, boxX + COLOR_BOX_SIZE - 1, boxY + COLOR_BOX_SIZE - 1, colorHex);
+
+            // Hover effect
             if (mouseX >= boxX && mouseX < boxX + COLOR_BOX_SIZE && mouseY >= boxY && mouseY < boxY + COLOR_BOX_SIZE) {
                 context.drawBorder(boxX, boxY, COLOR_BOX_SIZE, COLOR_BOX_SIZE, 0xFFFFFFFF);
             }
         }
-        int resetY = startY + (4 * COLOR_BOX_SIZE) + 2;
-        context.fill(startX, resetY, startX + width, resetY + 12, 0xFF404040);
-        context.drawCenteredTextWithShadow(textRenderer, "None", startX + width / 2, resetY + 2, 0xFFFFFF);
+
+        // Reset Button at bottom
+        int resetY = startY + (rows * COLOR_BOX_SIZE) + 2;
+        context.fill(startX, resetY, startX + width, resetY + 10, 0xFF404040);
+        context.drawCenteredTextWithShadow(textRenderer, "None", startX + width / 2, resetY + 1, 0xFFFFFF);
     }
 
     private List<Formatting> getColors() {
-        return Arrays.stream(Formatting.values()).filter(Formatting::isColor).toList();
+        return List.of(
+                // Row 1: Bright/Warm
+                Formatting.RED, Formatting.GOLD, Formatting.YELLOW, Formatting.LIGHT_PURPLE,
+                // Row 2: Greens & Cyans
+                Formatting.GREEN, Formatting.DARK_GREEN, Formatting.AQUA, Formatting.DARK_AQUA,
+                // Row 3: Deep Tones
+                Formatting.BLUE, Formatting.DARK_BLUE, Formatting.DARK_RED, Formatting.DARK_PURPLE,
+                // Row 4: Neutrals
+                Formatting.WHITE, Formatting.GRAY, Formatting.DARK_GRAY, Formatting.BLACK
+        );
     }
 
     @Override
@@ -266,19 +293,16 @@ public class LoreAnvilScreen extends HandledScreen<LoreAnvilBlockEntity.LoreAnvi
         // 1. Draw your custom container background
         context.drawTexture(TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight);
 
-        // 2. Clear the chest grid
-        context.fill(x + 7, y + 17, x + 7 + 162, y + 17 + 108, 0xFFC6C6C6);
-
         // 3. THE 1.21.1 SPRITE WAY:
         // This pulls the professional textured box from the Minecraft sprite library
         Identifier TEXT_FIELD_SPRITE = Identifier.ofVanilla("container/anvil/text_field");
 
         // Name field background
-        context.drawGuiTexture(TEXT_FIELD_SPRITE, x + 37, y + 18, 110, 16);
+        context.drawGuiTexture(TEXT_FIELD_SPRITE, x + 21, y + 18, 110, 16);
 
         // Lore field backgrounds
-        context.drawGuiTexture(TEXT_FIELD_SPRITE, x + 37, y + 73, 110, 16);
-        context.drawGuiTexture(TEXT_FIELD_SPRITE, x + 37, y + 91, 110, 16);
+        context.drawGuiTexture(TEXT_FIELD_SPRITE, x + 21, y + 73, 110, 16);
+        context.drawGuiTexture(TEXT_FIELD_SPRITE, x + 21, y + 91, 110, 16);
 
         // 4. Draw the Fake Slot for the item
         context.drawTexture(TEXTURE, x + 79, y + 44, 7, 139, 18, 18);

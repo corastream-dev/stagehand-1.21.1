@@ -98,6 +98,7 @@ public class StageReturnHandler {
             }
         }
 
+        //SFX
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 ModSounds.TELEPORT_FIRE, SoundCategory.PLAYERS, 1.0f, 1.0f);
 

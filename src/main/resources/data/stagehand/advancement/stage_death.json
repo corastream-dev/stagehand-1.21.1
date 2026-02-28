@@ -1,0 +1,14 @@
+{
+  "parent": "stagehand:enter_stage",
+  "display": {
+    "icon": { "id": "minecraft:totem_of_undying" },
+    "title": "Exit Stage Left",
+    "description": "Experience what death is like on the Stage.",
+    "frame": "task"
+  },
+  "criteria": {
+    "died_in_stage": {
+      "trigger": "stagehand:stage_death"
+    }
+  }
+}

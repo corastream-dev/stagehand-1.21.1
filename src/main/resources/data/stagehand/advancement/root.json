@@ -1,0 +1,18 @@
+{
+  "display": {
+    "icon": {
+      "id": "stagehand:stage_projector"
+    },
+    "title": "Stagehand",
+    "description": "Adventures in SMP",
+    "background": "minecraft:textures/block/black_concrete.png",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "frame": "task"
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

@@ -15,7 +15,7 @@ public class ModItemGroups {
     public static final ItemGroup STAGEHAND_BLOCKS_GROUP = Registry.register(Registries.ITEM_GROUP,
             Identifier.of(Stagehand.MOD_ID, "stagehand_blocks").toTranslationKey(),
             FabricItemGroup.builder()
-                    .icon(() -> new ItemStack(ModBlocks.PARTICLE_EMITTER_BLOCK))
+                    .icon(() -> new ItemStack(ModBlocks.STAGE_PROJECTOR_BLOCK))
                     .displayName(Text.translatable("itemgroup.stagehand.stagehand_blocks"))
                     .entries((displayContext, entries) -> {
                         entries.add(ModBlocks.FATIGUE_CORE_BLOCK);

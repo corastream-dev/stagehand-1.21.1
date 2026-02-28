@@ -1,5 +1,6 @@
 package corablue.stagehand;
 
+import corablue.stagehand.advancement.ModCriteria;
 import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
@@ -50,6 +51,7 @@ public class Stagehand implements ModInitializer {
 		ModBlockEntities.registerBlockEntities();
 		ModSounds.registerSounds();
 		ModNetwork.init();
+		ModCriteria.initialize();
 		ModDimensions.register();
 		ModScreenHandlers.registerScreenHandlers();
 
