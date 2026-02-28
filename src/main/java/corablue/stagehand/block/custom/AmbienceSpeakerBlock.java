@@ -1,8 +1,10 @@
 package corablue.stagehand.block.custom;
 
 import com.mojang.serialization.MapCodec;
+import corablue.stagehand.Stagehand;
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
+import corablue.stagehand.world.ModDimensions;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -102,6 +104,15 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         if (world.isClient || placer == null) return;
+
+        if (Stagehand.CONFIG.OnlyAllowSpeakerInStage() && !world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
+            world.breakBlock(pos, true);
+            if (placer instanceof PlayerEntity player) {
+                player.sendMessage(Text.literal("§cAmbience Speakers can only be placed in The Stage."), true);
+            }
+            return;
+        }
+
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof AmbienceSpeakerBlockEntity speaker) speaker.setOwner(placer.getUuid());
     }

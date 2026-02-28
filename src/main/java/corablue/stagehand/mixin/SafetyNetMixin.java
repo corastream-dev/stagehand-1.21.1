@@ -1,5 +1,6 @@
 package corablue.stagehand.mixin;
 
+import corablue.stagehand.Stagehand;
 import corablue.stagehand.world.ModDimensions;
 import corablue.stagehand.world.StageReturnHandler;
 import net.minecraft.entity.LivingEntity;
@@ -21,8 +22,12 @@ public abstract class SafetyNetMixin {
             //Check if they are in The Stage
             if (player.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
 
+                StageReturnHandler.FallbackMode mode = Stagehand.CONFIG.StageDeathReturnsToSpawn()
+                        ? StageReturnHandler.FallbackMode.RESPAWN_POINT
+                        : StageReturnHandler.FallbackMode.FORCE_OVERWORLD;
+
                 //Attempt Rescue
-                boolean rescued = StageReturnHandler.returnPlayer(player, StageReturnHandler.FallbackMode.RESPAWN_POINT);
+                boolean rescued = StageReturnHandler.returnPlayer(player, mode);
 
                 if (rescued) {
 
@@ -35,7 +40,7 @@ public abstract class SafetyNetMixin {
 
                     //Schedule the teleport for the next tick to avoid recursion/crash
                     player.getServer().execute(() -> {
-                        StageReturnHandler.returnPlayer(player, StageReturnHandler.FallbackMode.RESPAWN_POINT);
+                        StageReturnHandler.returnPlayer(player, mode);
                     });
 
                     cir.setReturnValue(true);

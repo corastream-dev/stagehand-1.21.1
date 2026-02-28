@@ -4,6 +4,7 @@ import corablue.stagehand.advancement.ModCriteria;
 import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
+import corablue.stagehand.config.StagehandConfig;
 import corablue.stagehand.item.ModItemGroups;
 import corablue.stagehand.item.ModItems;
 import corablue.stagehand.network.ModNetwork;
@@ -39,6 +40,7 @@ import java.util.UUID;
 public class Stagehand implements ModInitializer {
 	public static final String MOD_ID = "stagehand";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	public static final StagehandConfig CONFIG = StagehandConfig.createAndLoad();
 
 	// Queue for delaying the first-join teleport by a few ticks to prevent client ghost chunks
 	private static final Map<UUID, Integer> pendingHubTeleports = new HashMap<>();

@@ -38,6 +38,7 @@ dependencies {
 	//owolib
 	modImplementation "io.wispforest:owo-lib:0.12.15.4+1.21" // Verify version!
 	include "io.wispforest:owo-lib:0.12.15.4+1.21"
+	annotationProcessor "io.wispforest:owo-lib:0.12.15.4+1.21"
 	
 }
 

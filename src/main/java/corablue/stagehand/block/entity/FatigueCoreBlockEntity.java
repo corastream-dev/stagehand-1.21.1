@@ -1,5 +1,6 @@
 package corablue.stagehand.block.entity;
 
+import corablue.stagehand.Stagehand;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -67,7 +68,7 @@ public class FatigueCoreBlockEntity extends BlockEntity {
 
             // 1. Apply Mining Fatigue III
             // Duration is 31 ticks to ensure overlap between 20-tick pulses
-            player.addStatusEffect(new StatusEffectInstance(StatusEffects.MINING_FATIGUE, 31, 2, true, false, true));
+            player.addStatusEffect(new StatusEffectInstance(StatusEffects.MINING_FATIGUE, 31, Stagehand.CONFIG.MiningFatigueLevel(), true, false, true));
             be.currentlyAffected.add(uuid);
 
             // 2. Handle 10-Minute Message

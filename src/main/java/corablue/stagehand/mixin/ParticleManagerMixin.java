@@ -32,7 +32,7 @@ public abstract class ParticleManagerMixin {
 
     @Inject(method = "addParticle(Lnet/minecraft/client/particle/Particle;)V", at = @At("HEAD"))
     private void captureSortedParticles(Particle particle, CallbackInfo ci) {
-        // Acknowledge our new SORTED_SHEET
+        // Acknowledge our new SORTED_SHEET bittttttch
         if (particle.getType() == OmniParticle.SORTED_SHEET && !this.particles.containsKey(OmniParticle.SORTED_SHEET)) {
             this.particles.put(OmniParticle.SORTED_SHEET, EvictingQueue.create(16384));
         }
@@ -51,7 +51,7 @@ public abstract class ParticleManagerMixin {
             BufferBuilder bufferBuilder = OmniParticle.SORTED_SHEET.begin(tessellator, this.textureManager);
 
             if (bufferBuilder != null) {
-                // 1. Extract particles into a List so we can organize them
+                //Extract particles into a list
                 List<OmniParticle> sortedParticles = new ArrayList<>();
                 for (Particle p : queue) {
                     if (p instanceof OmniParticle op) {
@@ -59,14 +59,13 @@ public abstract class ParticleManagerMixin {
                     }
                 }
 
-                // 2. SORT BACK-TO-FRONT (Painter's Algorithm)
-                // We compare the distances. The furthest particles get put at the front of the list.
+                //SORT BACK-TO-FRONT (Painter's Algorithm)
                 sortedParticles.sort((p1, p2) -> Double.compare(
                         p2.getSquaredDistance(camera),
                         p1.getSquaredDistance(camera)
                 ));
 
-                // 3. Draw them in perfect order!
+                //Draw them in perfect order!
                 for (OmniParticle particle : sortedParticles) {
                     particle.buildGeometry(bufferBuilder, camera, tickDelta);
                 }

@@ -3,7 +3,9 @@
 	"package": "corablue.stagehand.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"SafetyNetMixin"
+		"SafetyNetMixin",
+		"StageTimeMixin",
+		"RecipeManagerMixin"
 	],
 	"client": [
 		"ParticleManagerMixin"
