@@ -50,15 +50,7 @@ public class StageReturnBlock extends Block {
 
                     // Attempt the return teleport
                     if (corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FORCE_OVERWORLD)) {
-
                         // TELEPORT SUCCESSFUL!
-                        // Because returnPlayer already moved them, player.getWorld() and player.getX() are now their new Overworld coordinates!
-
-                        // 1. Play the "Boom" sound at their arrival location
-                        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), corablue.stagehand.sound.ModSounds.TELEPORT_FIRE, net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f);
-
-                        // 2. Send the Network Packet for the instant screen flash
-                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new corablue.stagehand.network.FlashScreenPayload());
                     }
                 }
             }

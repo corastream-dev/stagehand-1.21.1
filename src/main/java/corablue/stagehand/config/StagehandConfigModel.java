@@ -8,6 +8,8 @@ import io.wispforest.owo.config.annotation.RangeConstraint;
 @Config(name = "stagehand-config", wrapperName = "StagehandConfig")
 public class StagehandConfigModel {
 
+    public String DefaultHubStage = "";
+
     public boolean OnlyAllowEmitterInStage = false;
 
     public boolean OnlyAllowSpeakerInStage = false;

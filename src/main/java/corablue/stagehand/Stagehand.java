@@ -37,6 +37,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import net.fabricmc.loader.api.FabricLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public class Stagehand implements ModInitializer {
 	public static final String MOD_ID = "stagehand";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -47,6 +51,18 @@ public class Stagehand implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+
+		//Create structure folder
+		Path configDir = FabricLoader.getInstance().getConfigDir().resolve("stagehand").resolve("structures");
+		if (!Files.exists(configDir)) {
+			try {
+				Files.createDirectories(configDir);
+				LOGGER.info("Created global structures directory at: " + configDir.toAbsolutePath());
+			} catch (Exception e) {
+				LOGGER.error("Failed to create global structures directory!", e);
+			}
+		}
+
 		ModItemGroups.registerItemGroups();
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
@@ -62,6 +78,32 @@ public class Stagehand implements ModInitializer {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.getPlayer();
 			StageManager manager = StageManager.getServerState(server);
+
+			// --- NEW: Auto-Setup Default Hub ---
+			String defaultHub = CONFIG.DefaultHubStage();
+			if (defaultHub != null && !defaultHub.isEmpty()) {
+
+				// Only initialize the hub if it hasn't been manually set by an admin yet!
+				if (manager.getHubPos() == null) {
+					String safeKey = defaultHub.toLowerCase().trim().replaceAll("[^a-z0-9_\\-]", "_");
+					UUID hash = UUID.nameUUIDFromBytes(safeKey.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+					// Ask the StageManager for the coordinate
+					BlockPos hubPos = manager.getOrCreatePlayerStage(hash);
+
+					// Lock it in as the global hub
+					manager.setGlobalHub(ModDimensions.THE_STAGE.getValue().toString(), hubPos);
+
+					// Generate the platform so the player doesn't fall into the void
+					ServerWorld stageDimension = server.getWorld(ModDimensions.THE_STAGE);
+					if (stageDimension != null) {
+						if (!(stageDimension.getBlockEntity(hubPos) instanceof corablue.stagehand.block.entity.StageConfigBlockEntity)) {
+							// Call our new static method! Owner is null since it's a global hub.
+							corablue.stagehand.block.entity.StageProjectorBlockEntity.generatePlatform(stageDimension, hubPos, safeKey, player.getUuid());
+						}
+					}
+				}
+			}
 
 			// Add new players to the queue instead of teleporting instantly
 			if (manager.isNewPlayer(player.getUuid()) && manager.getHubPos() != null) {
@@ -185,7 +227,7 @@ public class Stagehand implements ModInitializer {
 						if (successfullyOptedIn) {
 							player.sendMessage(Text.translatable("command.stagehand.fatigue_opt_in"), false);
 						} else {
-							player.sendMessage(Text.translatable("command.stagehand.not_in_fatigue\""), false);
+							player.sendMessage(Text.translatable("command.stagehand.not_in_fatigue"), false);
 						}
 						return 1;
 					}));

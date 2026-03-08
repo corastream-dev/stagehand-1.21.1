@@ -1,10 +1,12 @@
 package corablue.stagehand.block.entity;
 
 import corablue.stagehand.world.StageManager;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.RegistryEntryLookup;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.structure.StructurePlacementData;
@@ -19,6 +21,14 @@ import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.world.ModDimensions;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtSizeTracker;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.InputStream;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -95,22 +105,20 @@ public class StageProjectorBlockEntity extends BlockEntity {
         return this.worldKey;
     }
 
-    // --- The Deterministic Hash Math ---
+    // --- The Spiral Stage Allocation ---
     public BlockPos getStageCoordinate() {
-        if (this.worldKey == null || this.worldKey.isEmpty()) return null;
+        if (this.worldKey == null || this.worldKey.isEmpty() || this.world == null || this.world.isClient) {
+            return null;
+        }
 
-        // Standardize the string so "MyBase" and "mybase" go to the same place
-        String safeKey = this.worldKey.toLowerCase().trim();
+        // Fix: We MUST sanitize the string before hashing so "Quartz Pillar" and "quartz_pillar"
+        // generate the exact same UUID and point to the exact same spiral coordinate!
+        String safeKey = this.worldKey.toLowerCase().trim().replaceAll("[^a-z0-9_\\-]", "_");
         java.util.UUID hash = java.util.UUID.nameUUIDFromBytes(safeKey.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
-        // Modulo 29,000 keeps the coordinates safely within the 30M world border!
-        int gridX = (int) (hash.getMostSignificantBits() % 29000);
-        int gridZ = (int) (hash.getLeastSignificantBits() % 29000);
-
-        return new BlockPos(gridX * 1000, 100, gridZ * 1000);
+        return StageManager.getServerState(this.world.getServer()).getOrCreatePlayerStage(hash);
     }
 
-    // Replace your old getOrGenerateStage method with this:
     public BlockPos getOrGenerateStage() {
         if (this.world == null || this.world.isClient) return null;
 
@@ -121,47 +129,132 @@ public class StageProjectorBlockEntity extends BlockEntity {
 
         // Check if the platform exists by looking for the Config Block
         if (!(stageDimension.getBlockEntity(center) instanceof StageConfigBlockEntity)) {
-            generatePlatform(stageDimension, center);
+
+            // Pass the perfectly sanitized string down to the generator
+            String safeKey = this.worldKey != null ? this.worldKey.toLowerCase().trim().replaceAll("[^a-z0-9_\\-]", "_") : "";
+            generatePlatform(stageDimension, center, safeKey, this.owner);
         }
 
         return center;
     }
 
-    private void generatePlatform(net.minecraft.server.world.ServerWorld stageDimension, net.minecraft.util.math.BlockPos center) {
-
-        //Structure manager
+    public static void generatePlatform(net.minecraft.server.world.ServerWorld stageDimension, net.minecraft.util.math.BlockPos center, String safeKey, java.util.UUID owner) {
         StructureTemplateManager manager = stageDimension.getStructureTemplateManager();
-        Identifier templateId = Identifier.of("stagehand", "stage_platform");
-        Optional<StructureTemplate> templateOptional = manager.getTemplate(templateId);
+        Optional<StructureTemplate> templateOptional = Optional.empty();
 
+        if (!safeKey.isEmpty()) {
+
+            // --- 1. GLOBAL INSTANCE CHECK (.minecraft/config/stagehand/structures/) ---
+            Path configDir = FabricLoader.getInstance().getConfigDir().resolve("stagehand").resolve("structures");
+
+            // Auto-generate the folder if it doesn't exist so users know where to put things!
+            if (!Files.exists(configDir)) {
+                try {
+                    Files.createDirectories(configDir);
+                } catch (Exception e) {
+                    corablue.stagehand.Stagehand.LOGGER.warn("Could not create global structures directory.");
+                }
+            }
+
+            Path globalStructurePath = configDir.resolve(safeKey + ".nbt");
+
+            if (Files.exists(globalStructurePath)) {
+                NbtCompound nbt = null;
+
+                // First, try reading it as a standard compressed Minecraft Structure
+                try (InputStream stream = Files.newInputStream(globalStructurePath)) {
+                    nbt = NbtIo.readCompressed(stream, net.minecraft.nbt.NbtSizeTracker.ofUnlimitedBytes());
+                } catch (Exception e) {
+                    // If it fails (likely a ZipException), try reading it as an UNCOMPRESSED NBT file
+                    try (InputStream stream2 = Files.newInputStream(globalStructurePath);
+                         java.io.DataInputStream dataStream = new java.io.DataInputStream(stream2)) {
+
+                        nbt = NbtIo.readCompound(dataStream, net.minecraft.nbt.NbtSizeTracker.ofUnlimitedBytes());
+                    } catch (Exception e2) {
+                        corablue.stagehand.Stagehand.LOGGER.error("Failed to load global structure (Compressed & Uncompressed): " + safeKey, e2);
+                    }
+                }
+
+                if (nbt != null) {
+                    try {
+                        StructureTemplate template = manager.createTemplate(nbt);
+                        templateOptional = Optional.of(template);
+                    } catch (Exception e) {
+                        corablue.stagehand.Stagehand.LOGGER.error("Failed to parse NBT data into a Structure Template for: " + safeKey, e);
+                    }
+                }
+            } else {
+                corablue.stagehand.Stagehand.LOGGER.warn("Global structure file not found at expected path: " + globalStructurePath.toAbsolutePath());
+            }
+
+            // --- 2. DATAPACK FALLBACK (World-Specific) ---
+            if (templateOptional.isEmpty()) {
+                try {
+                    // This is the magic line.
+                    // If safeKey is "minecraft:bastion/units/air_base", it respects the namespace.
+                    // If safeKey is just "hub_world", it defaults to "minecraft:hub_world".
+                    Identifier customId = Identifier.of(safeKey);
+
+                    // Optional: If the player didn't provide a namespace, try Stagehand first!
+                    if (!safeKey.contains(":")) {
+                        Identifier stagehandId = Identifier.of("stagehand", safeKey);
+                        templateOptional = manager.getTemplate(stagehandId);
+                    }
+
+                    // If we still don't have it, try the literal ID they provided
+                    if (templateOptional.isEmpty()) {
+                        templateOptional = manager.getTemplate(customId);
+                    }
+                } catch (Exception e) {
+                    // Ignore, we will fallback to default next
+                }
+            }
+        }
+
+        // --- 3. DEFAULT FALLBACK ---
+        if (templateOptional.isEmpty()) {
+            Identifier defaultId = Identifier.of("stagehand", "stage_platform");
+            templateOptional = manager.getTemplate(defaultId);
+        }
+
+        // --- PLACEMENT LOGIC ---
         if (templateOptional.isPresent()) {
             StructureTemplate template = templateOptional.get();
 
-            //Configure placement settings (Rotation, Mirroring, etc.)
             StructurePlacementData placementData = new StructurePlacementData()
                     .setMirror(BlockMirror.NONE)
                     .setRotation(BlockRotation.NONE)
-                    .setIgnoreEntities(true); // Don't load saved cows/zombies
+                    .setIgnoreEntities(true);
 
-            // Structures place from the corner (lowest X, Y, Z), not the center.
-            net.minecraft.util.math.Vec3i size = template.getSize();
-            net.minecraft.util.math.BlockPos cornerPos = center.add(
-                    -size.getX() / 2,
-                    -6, // Adjust Y if you want the floor to be flush with the center
-                    -size.getZ() / 2
-            );
+            // Smart Centering Algorithm
+            BlockPos configOffset = null;
+            java.util.List<StructureTemplate.StructureBlockInfo> configBlocks = template.getInfosForBlock(
+                    BlockPos.ORIGIN,
+                    placementData,
+                    ModBlocks.STAGE_CONFIG_BLOCK
+                        );
 
-            //Place the structure!
+            if (!configBlocks.isEmpty()) {
+                configOffset = configBlocks.get(0).pos();
+            }
+
+            net.minecraft.util.math.BlockPos cornerPos;
+            if (configOffset != null) {
+                cornerPos = center.subtract(configOffset);
+            } else {
+                net.minecraft.util.math.Vec3i size = template.getSize();
+                cornerPos = center.add(-size.getX() / 2, -6, -size.getZ() / 2);
+            }
+
             template.place(stageDimension, cornerPos, cornerPos, placementData, stageDimension.getRandom(), 2);
         }
 
-        //Place the Config Block exactly in the center
+        // Ensure the Config Block is placed exactly in the center
         stageDimension.setBlockState(center, corablue.stagehand.block.ModBlocks.STAGE_CONFIG_BLOCK.getDefaultState());
 
-        //Inject the Owner UUID
         net.minecraft.block.entity.BlockEntity be = stageDimension.getBlockEntity(center);
         if (be instanceof StageConfigBlockEntity config) {
-            config.setOwner(this.owner);
+            config.setOwner(owner);
         }
     }
 

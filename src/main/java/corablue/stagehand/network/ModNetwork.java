@@ -96,7 +96,7 @@ public class ModNetwork {
                 switch (action) {
                     case RETURN -> {
                         //Just return the player
-                        corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FAIL);
+                        corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FORCE_OVERWORLD);
                     }
                     case SAVE -> {
                         if (isOwner) {
