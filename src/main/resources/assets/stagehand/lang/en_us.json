@@ -9,6 +9,9 @@
   "block.stagehand.stage_chest": "Stage Chest",
 
   "container.stagehand.stage_chest": "Instanced Chest",
+  "container.stagehand.stage_chest_infinite": "Infinite Chest",
+  "container.stagehand.stage_chest_timer": "Timed Reset Chest",
+  "container.stagehand.stage_chest_refill": "Replenshing Chest",
 
   "ui.stagehand.selected": "Selected: ",
   "sound.stagehand.ambience_electric_hum": "Electric Hum",

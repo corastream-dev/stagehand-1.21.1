@@ -90,7 +90,7 @@ public class StageChestBlock extends BlockWithEntity {
         if (be instanceof StageChestBlockEntity chest) {
             world.playSound(null, pos, SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 0.9f);
 
-            if (player.getUuid().equals(chest.getOwnerId()) || player.hasPermissionLevel(2)) {
+            if (player.getUuid().equals(chest.getOwnerId()) || player.isCreative()) {
                 player.openHandledScreen(chest);
             } else {
                 handleLooting(chest, player, world);

@@ -139,6 +139,12 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
 
     @Override
     public Text getDisplayName() {
+        switch(this.mode){
+            case INFINITE: return Text.translatable("container.stagehand.stage_chest_infinite");
+            case ONCE: return Text.translatable("container.stagehand.stage_chest");
+            case TIMER: return Text.translatable("container.stagehand.stage_chest_timer");
+            case REFILL: return Text.translatable("container.stagehand.stage_chest_refill");
+        }
         return Text.translatable("container.stagehand.stage_chest");
     }
 
@@ -147,6 +153,7 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
     public net.minecraft.screen.ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
         return new corablue.stagehand.screen.StageChestScreenHandler(syncId, playerInventory, this, this.propertyDelegate, this.pos);
     }
+
 
     @Override
     public BlockPos getScreenOpeningData(ServerPlayerEntity player) {
