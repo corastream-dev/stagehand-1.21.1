@@ -3,6 +3,7 @@ package corablue.stagehand.block.custom;
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageChestBlockEntity;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -10,17 +11,22 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +34,11 @@ import java.util.UUID;
 
 public class StageChestBlock extends BlockWithEntity {
     public static final MapCodec<StageChestBlock> CODEC = createCodec(StageChestBlock::new);
+    public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
 
     public StageChestBlock(Settings settings) {
         super(settings);
+        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
     }
 
 
@@ -49,6 +57,16 @@ public class StageChestBlock extends BlockWithEntity {
     public BlockRenderType getRenderType(net.minecraft.block.BlockState state) {
         // This tells Minecraft: "Don't look for a JSON model, look for a BlockEntityRenderer!"
         return net.minecraft.block.BlockRenderType.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext ctx) {
+        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 
     @Override

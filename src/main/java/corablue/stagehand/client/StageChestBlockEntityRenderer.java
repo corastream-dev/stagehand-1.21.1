@@ -39,7 +39,7 @@ public class StageChestBlockEntityRenderer implements BlockEntityRenderer<StageC
     public void render(StageChestBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         MinecraftClient client = MinecraftClient.getInstance();
 
-        // 1. Determine if the chest is open (Local Player Check)
+        //Determine if the chest is open (Local Player Check)
         entity.clientIsOpen = false;
         if (client.player != null && client.player.currentScreenHandler instanceof corablue.stagehand.screen.StageChestScreenHandler handler) {
             if (handler.pos.equals(entity.getPos())) {
@@ -47,13 +47,13 @@ public class StageChestBlockEntityRenderer implements BlockEntityRenderer<StageC
             }
         }
 
-        // 2. Calculate Framerate-Independent Time Delta
+        //Calculate Framerate-Independent Time Delta
         long currentTime = System.currentTimeMillis();
         if (entity.lastAnimationTime == 0) entity.lastAnimationTime = currentTime;
         float deltaSeconds = (currentTime - entity.lastAnimationTime) / 1000.0f;
         entity.lastAnimationTime = currentTime;
 
-        // 3. Animate the Angle (Visually Only)
+        //Animate the Angle (Visually Only)
         if (deltaSeconds > 0.5f) {
             entity.lidAngle = entity.clientIsOpen ? 1.0f : 0.0f;
         } else {
@@ -65,7 +65,9 @@ public class StageChestBlockEntityRenderer implements BlockEntityRenderer<StageC
             }
         }
 
-        // 4. Bind the target and render
+        this.dummyChest.setCachedState(entity.getCachedState());
+
+        //Bind the target and render
         this.dummyChest.targetEntity = entity;
         this.vanillaRenderer.render(this.dummyChest, tickDelta, matrices, vertexConsumers, light, overlay);
         this.dummyChest.targetEntity = null;
