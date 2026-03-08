@@ -16,14 +16,12 @@ public class StageChestScreenHandler extends ScreenHandler {
     private final PropertyDelegate propertyDelegate;
     public final BlockPos pos;
 
-    // Client-side constructor
     public StageChestScreenHandler(int syncId, PlayerInventory playerInventory, BlockPos pos) {
-        this(syncId, playerInventory, new SimpleInventory(27), new ArrayPropertyDelegate(2), pos);
+        this(syncId, playerInventory, new SimpleInventory(27), new ArrayPropertyDelegate(3), pos);
     }
 
-    // Server-side constructor
     public StageChestScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate propertyDelegate, BlockPos pos) {
-        super(ModScreenHandlers.STAGE_CHEST, syncId); // Ensure STAGE_CHEST is in ModScreenHandlers!
+        super(ModScreenHandlers.STAGE_CHEST, syncId);
         this.inventory = inventory;
         this.propertyDelegate = propertyDelegate;
         this.pos = pos;
@@ -32,33 +30,24 @@ public class StageChestScreenHandler extends ScreenHandler {
         inventory.onOpen(playerInventory.player);
         this.addProperties(propertyDelegate);
 
-        // Chest Inventory (3 rows of 9)
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 this.addSlot(new Slot(inventory, col + row * 9, 8 + col * 18, 18 + row * 18));
             }
         }
-
-        // Player Inventory
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
-
-        // Player Hotbar
         for (int col = 0; col < 9; ++col) {
             this.addSlot(new Slot(playerInventory, col, 8 + col * 18, 142));
         }
     }
 
-    public int getMode() {
-        return this.propertyDelegate.get(0);
-    }
-
-    public int getTimerTicks() {
-        return this.propertyDelegate.get(1);
-    }
+    public int getMode() { return this.propertyDelegate.get(0); }
+    public int getTimerTicks() { return this.propertyDelegate.get(1); }
+    public boolean isOwner() { return this.propertyDelegate.get(2) == 1; }
 
     @Override
     public ItemStack quickMove(PlayerEntity player, int invSlot) {

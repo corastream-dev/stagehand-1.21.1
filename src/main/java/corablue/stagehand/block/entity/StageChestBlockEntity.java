@@ -48,6 +48,7 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
             return switch (index) {
                 case 0 -> mode.ordinal();
                 case 1 -> timerCooldownTicks;
+                case 2 -> 1; // Always 1 here because this is the physical owner's BE
                 default -> 0;
             };
         }
@@ -62,7 +63,7 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
 
         @Override
         public int size() {
-            return 2; // We are tracking 2 variables: Mode and Timer
+            return 3;
         }
     };
 

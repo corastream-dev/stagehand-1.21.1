@@ -1,11 +1,14 @@
 package corablue.stagehand.world;
 
 import corablue.stagehand.Stagehand;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
@@ -18,8 +21,11 @@ import java.util.UUID;
 
 public class StageChestManager extends PersistentState {
 
-    // Structure: Chest ID -> (Looter ID -> Set of Destroyed Item Instance IDs)
+    // Chest ID -> (Looter ID -> Set of Destroyed Item Instance IDs)
     private final Map<UUID, Map<UUID, Set<UUID>>> destroyedItems = new HashMap<>();
+
+    // Chest ID -> (Looter ID -> Persistent Chest Inventory)
+    private final Map<UUID, Map<UUID, DefaultedList<ItemStack>>> chestInventories = new HashMap<>();
 
     public StageChestManager() {}
 
@@ -27,23 +33,18 @@ public class StageChestManager extends PersistentState {
 
     public static void markItemDestroyed(MinecraftServer server, UUID chestId, UUID looterId, UUID itemInstanceId) {
         StageChestManager state = getServerState(server);
-
         state.destroyedItems
                 .computeIfAbsent(chestId, k -> new HashMap<>())
                 .computeIfAbsent(looterId, k -> new HashSet<>())
                 .add(itemInstanceId);
-
-        state.markDirty(); // Tells Minecraft to save this to disk on the next autosave
-        Stagehand.LOGGER.info("Tracked item destroyed! Chest: " + chestId + ", Looter: " + looterId);
+        state.markDirty();
     }
 
     public static boolean isItemDestroyed(MinecraftServer server, UUID chestId, UUID looterId) {
         StageChestManager state = getServerState(server);
-
         Map<UUID, Set<UUID>> chestData = state.destroyedItems.get(chestId);
         if (chestData != null) {
             Set<UUID> looterData = chestData.get(looterId);
-            // Returns true if the looter has at least one destroyed item registered from this chest
             return looterData != null && !looterData.isEmpty();
         }
         return false;
@@ -51,7 +52,6 @@ public class StageChestManager extends PersistentState {
 
     public static void resetDestroyedStatus(MinecraftServer server, UUID chestId, UUID looterId) {
         StageChestManager state = getServerState(server);
-
         Map<UUID, Set<UUID>> chestData = state.destroyedItems.get(chestId);
         if (chestData != null) {
             chestData.remove(looterId);
@@ -59,18 +59,28 @@ public class StageChestManager extends PersistentState {
         }
     }
 
+    // --- Inventory API ---
+
+    public static DefaultedList<ItemStack> getOrCreatePlayerInventory(MinecraftServer server, UUID chestId, UUID looterId) {
+        StageChestManager state = getServerState(server);
+        return state.chestInventories
+                .computeIfAbsent(chestId, k -> new HashMap<>())
+                .computeIfAbsent(looterId, k -> DefaultedList.ofSize(27, ItemStack.EMPTY));
+    }
+
+    public static void savePlayerInventory(MinecraftServer server, UUID chestId, UUID looterId, DefaultedList<ItemStack> inventory) {
+        StageChestManager state = getServerState(server);
+        state.chestInventories
+                .computeIfAbsent(chestId, k -> new HashMap<>())
+                .put(looterId, inventory);
+        state.markDirty();
+    }
+
     // --- State Saving and Loading ---
 
     public static StageChestManager getServerState(MinecraftServer server) {
-        // We save this to the Overworld's data so it is universally accessible across dimensions
         PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
-
-        Type<StageChestManager> type = new Type<>(
-                StageChestManager::new, // If it doesn't exist, create a new one
-                StageChestManager::createFromNbt, // If it does exist, load it from NBT
-                null
-        );
-
+        Type<StageChestManager> type = new Type<>(StageChestManager::new, StageChestManager::createFromNbt, null);
         return persistentStateManager.getOrCreate(type, Stagehand.MOD_ID + "_stage_chest_manager");
     }
 
@@ -78,22 +88,41 @@ public class StageChestManager extends PersistentState {
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         NbtList chestList = new NbtList();
 
-        for (Map.Entry<UUID, Map<UUID, Set<UUID>>> chestEntry : destroyedItems.entrySet()) {
+        Set<UUID> allChests = new HashSet<>();
+        allChests.addAll(destroyedItems.keySet());
+        allChests.addAll(chestInventories.keySet());
+
+        for (UUID chestId : allChests) {
             NbtCompound chestTag = new NbtCompound();
-            chestTag.putUuid("ChestId", chestEntry.getKey());
+            chestTag.putUuid("ChestId", chestId);
 
             NbtList looterList = new NbtList();
-            for (Map.Entry<UUID, Set<UUID>> looterEntry : chestEntry.getValue().entrySet()) {
-                NbtCompound looterTag = new NbtCompound();
-                looterTag.putUuid("LooterId", looterEntry.getKey());
+            Set<UUID> allLooters = new HashSet<>();
+            if (destroyedItems.containsKey(chestId)) allLooters.addAll(destroyedItems.get(chestId).keySet());
+            if (chestInventories.containsKey(chestId)) allLooters.addAll(chestInventories.get(chestId).keySet());
 
-                NbtList itemsList = new NbtList();
-                for (UUID itemId : looterEntry.getValue()) {
-                    NbtCompound itemTag = new NbtCompound();
-                    itemTag.putUuid("ItemId", itemId);
-                    itemsList.add(itemTag);
+            for (UUID looterId : allLooters) {
+                NbtCompound looterTag = new NbtCompound();
+                looterTag.putUuid("LooterId", looterId);
+
+                // Save Destroyed Items
+                if (destroyedItems.containsKey(chestId) && destroyedItems.get(chestId).containsKey(looterId)) {
+                    NbtList itemsList = new NbtList();
+                    for (UUID itemId : destroyedItems.get(chestId).get(looterId)) {
+                        NbtCompound itemTag = new NbtCompound();
+                        itemTag.putUuid("ItemId", itemId);
+                        itemsList.add(itemTag);
+                    }
+                    looterTag.put("DestroyedItems", itemsList);
                 }
-                looterTag.put("DestroyedItems", itemsList);
+
+                // Save Inventory
+                if (chestInventories.containsKey(chestId) && chestInventories.get(chestId).containsKey(looterId)) {
+                    NbtCompound invTag = new NbtCompound();
+                    Inventories.writeNbt(invTag, chestInventories.get(chestId).get(looterId), registryLookup);
+                    looterTag.put("Inventory", invTag);
+                }
+
                 looterList.add(looterTag);
             }
             chestTag.put("Looters", looterList);
@@ -114,20 +143,31 @@ public class StageChestManager extends PersistentState {
                 UUID chestId = chestTag.getUuid("ChestId");
 
                 Map<UUID, Set<UUID>> looterMap = new HashMap<>();
+                Map<UUID, DefaultedList<ItemStack>> invMap = new HashMap<>();
+
                 NbtList looterList = chestTag.getList("Looters", NbtElement.COMPOUND_TYPE);
 
                 for (int j = 0; j < looterList.size(); j++) {
                     NbtCompound looterTag = looterList.getCompound(j);
                     UUID looterId = looterTag.getUuid("LooterId");
 
-                    Set<UUID> itemSet = new HashSet<>();
-                    NbtList itemsList = looterTag.getList("DestroyedItems", NbtElement.COMPOUND_TYPE);
-                    for (int k = 0; k < itemsList.size(); k++) {
-                        itemSet.add(itemsList.getCompound(k).getUuid("ItemId"));
+                    if (looterTag.contains("DestroyedItems")) {
+                        Set<UUID> itemSet = new HashSet<>();
+                        NbtList itemsList = looterTag.getList("DestroyedItems", NbtElement.COMPOUND_TYPE);
+                        for (int k = 0; k < itemsList.size(); k++) {
+                            itemSet.add(itemsList.getCompound(k).getUuid("ItemId"));
+                        }
+                        looterMap.put(looterId, itemSet);
                     }
-                    looterMap.put(looterId, itemSet);
+
+                    if (looterTag.contains("Inventory")) {
+                        DefaultedList<ItemStack> inventory = DefaultedList.ofSize(27, ItemStack.EMPTY);
+                        Inventories.readNbt(looterTag.getCompound("Inventory"), inventory, registryLookup);
+                        invMap.put(looterId, inventory);
+                    }
                 }
-                state.destroyedItems.put(chestId, looterMap);
+                if (!looterMap.isEmpty()) state.destroyedItems.put(chestId, looterMap);
+                if (!invMap.isEmpty()) state.chestInventories.put(chestId, invMap);
             }
         }
         return state;

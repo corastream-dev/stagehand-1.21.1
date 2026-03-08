@@ -3,7 +3,6 @@ package corablue.stagehand.client.gui;
 import corablue.stagehand.block.entity.StageChestBlockEntity.ChestMode;
 import corablue.stagehand.network.StageChestUpdatePacket;
 import corablue.stagehand.screen.StageChestScreenHandler;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -12,7 +11,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class StageChestScreen extends HandledScreen<StageChestScreenHandler> {
-    // We use the vanilla 54-slot chest texture, but we'll only draw the top 3 rows.
     private static final Identifier TEXTURE = Identifier.ofVanilla("textures/gui/container/generic_54.png");
 
     private ButtonWidget modeButton;
@@ -21,7 +19,7 @@ public class StageChestScreen extends HandledScreen<StageChestScreenHandler> {
 
     public StageChestScreen(StageChestScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
-        this.backgroundHeight = 114 + 3 * 18; // Size for 3 rows + player inventory
+        this.backgroundHeight = 114 + 3 * 18;
         this.playerInventoryTitleY = this.backgroundHeight - 94;
     }
 
@@ -29,18 +27,15 @@ public class StageChestScreen extends HandledScreen<StageChestScreenHandler> {
     protected void init() {
         super.init();
 
-        // Mode Cycle Button (Placed to the right of the UI)
         this.modeButton = this.addDrawableChild(ButtonWidget.builder(getModeText(), button -> {
             int nextMode = (this.handler.getMode() + 1) % ChestMode.values().length;
             sendUpdatePacket(nextMode, this.handler.getTimerTicks());
         }).dimensions(this.x + 180, this.y + 16, 100, 20).build());
 
-        // Timer + Button
         this.timeAddButton = this.addDrawableChild(ButtonWidget.builder(Text.literal("+1 Hr"), button -> {
-            sendUpdatePacket(this.handler.getMode(), this.handler.getTimerTicks() + 1000); // 1 in-game hr = 1000 ticks
+            sendUpdatePacket(this.handler.getMode(), this.handler.getTimerTicks() + 1000);
         }).dimensions(this.x + 180, this.y + 40, 48, 20).build());
 
-        // Timer - Button
         this.timeSubButton = this.addDrawableChild(ButtonWidget.builder(Text.literal("-1 Hr"), button -> {
             int newTime = Math.max(0, this.handler.getTimerTicks() - 1000);
             sendUpdatePacket(this.handler.getMode(), newTime);
@@ -55,12 +50,16 @@ public class StageChestScreen extends HandledScreen<StageChestScreenHandler> {
     }
 
     private void updateButtonStates() {
-        this.modeButton.setMessage(getModeText());
+        boolean isOwner = this.handler.isOwner();
+        this.modeButton.visible = isOwner;
 
-        // Only show timer buttons if the mode is TIMER
         boolean isTimer = ChestMode.values()[this.handler.getMode()] == ChestMode.TIMER;
-        this.timeAddButton.visible = isTimer;
-        this.timeSubButton.visible = isTimer;
+        this.timeAddButton.visible = isOwner && isTimer;
+        this.timeSubButton.visible = isOwner && isTimer;
+
+        if (isOwner) {
+            this.modeButton.setMessage(getModeText());
+        }
     }
 
     private void sendUpdatePacket(int modeOrdinal, int timerTicks) {
@@ -70,7 +69,7 @@ public class StageChestScreen extends HandledScreen<StageChestScreenHandler> {
     @Override
     protected void handledScreenTick() {
         super.handledScreenTick();
-        updateButtonStates(); // Keep buttons updated if data syncs from server
+        updateButtonStates();
     }
 
     @Override
@@ -87,8 +86,7 @@ public class StageChestScreen extends HandledScreen<StageChestScreenHandler> {
         super.render(context, mouseX, mouseY, delta);
         this.drawMouseoverTooltip(context, mouseX, mouseY);
 
-        // Draw the timer value if in Timer mode
-        if (ChestMode.values()[this.handler.getMode()] == ChestMode.TIMER) {
+        if (this.handler.isOwner() && ChestMode.values()[this.handler.getMode()] == ChestMode.TIMER) {
             int seconds = this.handler.getTimerTicks() / 20;
             context.drawText(this.textRenderer, "Cooldown: " + seconds + "s", this.x + 180, this.y + 65, 0xFFFFFF, true);
         }

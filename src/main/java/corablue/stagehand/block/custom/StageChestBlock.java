@@ -2,19 +2,23 @@ package corablue.stagehand.block.custom;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageChestBlockEntity;
-import corablue.stagehand.world.StageChestManager;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ArrayPropertyDelegate;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -42,7 +46,6 @@ public class StageChestBlock extends BlockWithEntity {
 
     @Override
     public BlockRenderType getRenderType(BlockState state) {
-        // Assuming you are doing a standard model. Change to ENTITYBLOCK_ANIMATED if you are making a custom chest lid animation
         return BlockRenderType.MODEL;
     }
 
@@ -65,13 +68,9 @@ public class StageChestBlock extends BlockWithEntity {
 
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof StageChestBlockEntity chest) {
-
-            // Check if player is owner or server admin
             if (player.getUuid().equals(chest.getOwnerId()) || player.hasPermissionLevel(2)) {
-                // Owner opens the config UI
                 player.openHandledScreen(chest);
             } else {
-                // Non-owner opens their instanced view of the chest
                 handleLooting(chest, player, world);
             }
         }
@@ -79,106 +78,132 @@ public class StageChestBlock extends BlockWithEntity {
     }
 
     private void handleLooting(StageChestBlockEntity chest, PlayerEntity player, World world) {
+        UUID chestId = chest.getUuid();
         UUID pid = player.getUuid();
-        StageChestBlockEntity.ChestMode mode = chest.getMode();
 
-        boolean isEligible = false;
-        boolean addTracker = false;
-        String denyMessage = null;
+        // 1. Fetch persistent instanced inventory
+        DefaultedList<ItemStack> pInvData = corablue.stagehand.world.StageChestManager.getOrCreatePlayerInventory(world.getServer(), chestId, pid);
 
-        // 1. Determine if the player is allowed to see the loot
-        switch (mode) {
-            case SINGLE:
-                if (!chest.hasPlayerLooted(pid)) {
-                    isEligible = true;
-                    chest.markPlayerLooted(pid);
-                } else {
-                    denyMessage = "This chest is empty.";
+        // 2. Perform Refill Logic
+        boolean isFirstTime = !chest.hasPlayerLooted(pid);
+        boolean dirty = false;
+
+        if (isFirstTime) {
+            for (int i = 0; i < chest.getItems().size(); i++) {
+                ItemStack templateItem = chest.getItems().get(i);
+                if (!templateItem.isEmpty()) {
+                    ItemStack clone = templateItem.copy();
+                    attachTrackerIfNeeded(clone, chest, pid);
+                    pInvData.set(i, clone);
                 }
-                break;
+            }
+            chest.markPlayerLooted(pid);
+            dirty = true;
+        } else {
+            boolean triggerRefill = false;
 
-            case INFINITE:
-                isEligible = true;
-                break;
+            switch (chest.getMode()) {
+                case SINGLE:
+                    break;
+                case TIMER:
+                    if (world.getTime() - chest.getLastLootTime(pid) >= chest.getTimerCooldownTicks()) {
+                        triggerRefill = true;
+                        chest.setLastLootTime(pid, world.getTime());
+                    }
+                    break;
+                case REFILL_ON_DESTROYED:
+                    if (corablue.stagehand.world.StageChestManager.isItemDestroyed(world.getServer(), chestId, pid)) {
+                        triggerRefill = true;
+                    }
+                    break;
+                case INFINITE:
+                    triggerRefill = true;
+                    break;
+            }
 
-            case TIMER:
-                long lastLootTime = chest.getLastLootTime(pid);
-                long currentTime = world.getTime();
-                if (currentTime - lastLootTime >= chest.getTimerCooldownTicks()) {
-                    isEligible = true;
-                    chest.setLastLootTime(pid, currentTime);
-                } else {
-                    long remainingSeconds = (chest.getTimerCooldownTicks() - (currentTime - lastLootTime)) / 20;
-                    denyMessage = "Try again in " + remainingSeconds + " seconds.";
-                }
-                break;
+            if (triggerRefill) {
+                // Clear the tracker map for this player on this chest
+                corablue.stagehand.world.StageChestManager.resetDestroyedStatus(world.getServer(), chestId, pid);
 
-            case REFILL_ON_DESTROYED:
-                boolean itemsLost = corablue.stagehand.world.StageChestManager.isItemDestroyed(world.getServer(), chest.getUuid(), pid);
-                if (!chest.hasPlayerLooted(pid) || itemsLost) {
-                    isEligible = true;
-                    addTracker = true;
-                    chest.markPlayerLooted(pid);
-                    corablue.stagehand.world.StageChestManager.resetDestroyedStatus(world.getServer(), chest.getUuid(), pid);
-                } else {
-                    denyMessage = "You must lose your current items before getting more.";
-                }
-                break;
-        }
+                for (ItemStack templateItem : chest.getItems()) {
+                    if (templateItem.isEmpty()) continue;
 
-        // Give them a heads up if they aren't getting new loot
-        if (denyMessage != null) {
-            player.sendMessage(Text.literal(denyMessage), true);
-        }
+                    // Safely handles duplicates of the same item in the template
+                    long requiredCount = chest.getItems().stream().filter(s -> ItemStack.areItemsEqual(s, templateItem)).count();
+                    long currentCount = pInvData.stream().filter(s -> ItemStack.areItemsEqual(s, templateItem)).count();
 
-        // 2. Open the UI
-        openInstancedChest(chest, player, isEligible, addTracker);
-    }
-
-    private void openInstancedChest(StageChestBlockEntity chest, PlayerEntity player, boolean populateLoot, boolean addTracker) {
-        // Create a temporary virtual inventory
-        net.minecraft.inventory.SimpleInventory virtualInventory = new net.minecraft.inventory.SimpleInventory(27) {
-            @Override
-            public void onClose(PlayerEntity playerEntity) {
-                super.onClose(playerEntity);
-                // SAFETY NET: Drop anything left in the virtual chest when they close it.
-                // Prevents losing accidental deposits or unlooted rewards.
-                for (int i = 0; i < this.size(); i++) {
-                    ItemStack stack = this.getStack(i);
-                    if (!stack.isEmpty()) {
-                        playerEntity.dropItem(stack, false);
+                    if (currentCount < requiredCount) {
+                        for (int slot = 0; slot < pInvData.size(); slot++) {
+                            if (pInvData.get(slot).isEmpty()) {
+                                ItemStack clone = templateItem.copy();
+                                attachTrackerIfNeeded(clone, chest, pid);
+                                pInvData.set(slot, clone);
+                                dirty = true;
+                                break;
+                            }
+                        }
                     }
                 }
+            }
+        }
+
+        if (dirty) {
+            corablue.stagehand.world.StageChestManager.savePlayerInventory(world.getServer(), chestId, pid, pInvData);
+        }
+
+        openInstancedChest(chest, player, pInvData);
+    }
+
+    private void openInstancedChest(StageChestBlockEntity chest, PlayerEntity player, DefaultedList<ItemStack> pInvData) {
+        UUID chestId = chest.getUuid();
+        UUID pid = player.getUuid();
+
+        net.minecraft.inventory.SimpleInventory virtualInventory = new net.minecraft.inventory.SimpleInventory(27) {
+            @Override
+            public void markDirty() {
+                super.markDirty();
+                DefaultedList<ItemStack> currentItems = DefaultedList.ofSize(27, ItemStack.EMPTY);
+                for(int i=0; i < 27; i++) {
+                    currentItems.set(i, this.getStack(i));
+                }
+                corablue.stagehand.world.StageChestManager.savePlayerInventory(player.getServer(), chestId, pid, currentItems);
             }
         };
 
-        // Fill it with the template items if they are eligible
-        if (populateLoot) {
-            net.minecraft.util.collection.DefaultedList<ItemStack> template = chest.getItems();
-            for (int i = 0; i < template.size(); i++) {
-                ItemStack templateStack = template.get(i);
-                if (!templateStack.isEmpty()) {
-                    ItemStack stackToGive = templateStack.copy(); // MUST COPY!
-
-                    if (addTracker) {
-                        stackToGive.set(corablue.stagehand.item.ModComponents.STAGE_CHEST_TRACKER,
-                                new corablue.stagehand.item.StageChestTrackerComponent(chest.getUuid(), player.getUuid(), java.util.UUID.randomUUID())
-                        );
-                    }
-
-                    virtualInventory.setStack(i, stackToGive);
-                }
-            }
+        for (int i = 0; i < pInvData.size(); i++) {
+            virtualInventory.setStack(i, pInvData.get(i));
         }
 
-        // Play the chest open sound
         player.getWorld().playSound(null, player.getBlockPos(), SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1.0f);
 
-        // Open the generic 9x3 chest UI for the player
-        player.openHandledScreen(new net.minecraft.screen.SimpleNamedScreenHandlerFactory(
-                (syncId, playerInv, p) -> net.minecraft.screen.GenericContainerScreenHandler.createGeneric9x3(syncId, playerInv, virtualInventory),
-                chest.getDisplayName()
-        ));
+        player.openHandledScreen(new ExtendedScreenHandlerFactory<BlockPos>() {
+            @Override
+            public BlockPos getScreenOpeningData(net.minecraft.server.network.ServerPlayerEntity p) {
+                return chest.getPos();
+            }
+            @Override
+            public Text getDisplayName() {
+                return chest.getDisplayName();
+            }
+            @Override
+            public ScreenHandler createMenu(int syncId, PlayerInventory playerInv, PlayerEntity playerEntity) {
+                // Pass a PropertyDelegate declaring they are NOT an owner (0)
+                ArrayPropertyDelegate props = new ArrayPropertyDelegate(3);
+                props.set(0, chest.getMode().ordinal());
+                props.set(1, chest.getTimerCooldownTicks());
+                props.set(2, 0);
+
+                return new corablue.stagehand.screen.StageChestScreenHandler(syncId, playerInv, virtualInventory, props, chest.getPos());
+            }
+        });
+    }
+
+    private void attachTrackerIfNeeded(ItemStack stack, StageChestBlockEntity chest, UUID pid) {
+        if (chest.getMode() == StageChestBlockEntity.ChestMode.REFILL_ON_DESTROYED || chest.getMode() == StageChestBlockEntity.ChestMode.SINGLE) {
+            stack.set(corablue.stagehand.item.ModComponents.STAGE_CHEST_TRACKER,
+                    new corablue.stagehand.item.StageChestTrackerComponent(chest.getUuid(), pid, java.util.UUID.randomUUID())
+            );
+        }
     }
 
     @Override
@@ -186,7 +211,6 @@ public class StageChestBlock extends BlockWithEntity {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof StageChestBlockEntity chestBlockEntity) {
-                // Drop the owner's template items if the chest is broken
                 ItemScatterer.spawn(world, pos, chestBlockEntity);
                 world.updateComparators(pos, this);
             }
