@@ -65,6 +65,32 @@ public class StagehandClient implements ClientModInitializer {
                 corablue.stagehand.client.StageProjectorBlockEntityRenderer::new
         );
 
+        // ==========================================
+        //         STAGE CHEST RENDERERS
+        // ==========================================
+
+        // 1. Register the block renderer (Uses our custom wrapper to bypass the generic error and add animation)
+        net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry.register(
+                corablue.stagehand.block.entity.ModBlockEntities.STAGE_CHEST_BE,
+                corablue.stagehand.client.StageChestBlockEntityRenderer::new
+        );
+
+        // 2. Create a single dummy chest to be used by the item renderer
+        // (Prevents the game from creating 60 new chest objects a second in your inventory!)
+        corablue.stagehand.block.entity.StageChestBlockEntity dummyChest = new corablue.stagehand.block.entity.StageChestBlockEntity(
+                net.minecraft.util.math.BlockPos.ORIGIN,
+                ModBlocks.STAGE_CHEST_BLOCK.getDefaultState()
+        );
+
+        // 3. Register the item renderer so the item looks like a 3D chest instead of a flat texture
+        net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(
+                ModBlocks.STAGE_CHEST_BLOCK,
+                (stack, mode, matrices, vertexConsumers, light, overlay) -> {
+                    net.minecraft.client.MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(
+                            dummyChest, matrices, vertexConsumers, light, overlay
+                    );
+                });
+
         //Client Particles
         ModParticles.registerClientFactories();
 

@@ -77,4 +77,20 @@ public class StageChestScreenHandler extends ScreenHandler {
     public boolean canUse(PlayerEntity player) {
         return this.inventory.canPlayerUse(player);
     }
+
+    @Override
+    public void onClosed(net.minecraft.entity.player.PlayerEntity player) {
+        super.onClosed(player);
+
+        if (!player.getWorld().isClient()) {
+            player.getWorld().playSound(
+                    null,
+                    this.pos,
+                    net.minecraft.sound.SoundEvents.BLOCK_CHEST_CLOSE,
+                    net.minecraft.sound.SoundCategory.BLOCKS,
+                    0.5f,
+                    1.0f
+            );
+        }
+    }
 }

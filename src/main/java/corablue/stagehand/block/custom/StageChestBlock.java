@@ -33,6 +33,7 @@ public class StageChestBlock extends BlockWithEntity {
         super(settings);
     }
 
+
     @Override
     protected MapCodec<? extends BlockWithEntity> getCodec() {
         return CODEC;
@@ -45,8 +46,9 @@ public class StageChestBlock extends BlockWithEntity {
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public BlockRenderType getRenderType(net.minecraft.block.BlockState state) {
+        // This tells Minecraft: "Don't look for a JSON model, look for a BlockEntityRenderer!"
+        return net.minecraft.block.BlockRenderType.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -68,6 +70,8 @@ public class StageChestBlock extends BlockWithEntity {
 
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof StageChestBlockEntity chest) {
+            world.playSound(null, pos, SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 0.9f);
+
             if (player.getUuid().equals(chest.getOwnerId()) || player.hasPermissionLevel(2)) {
                 player.openHandledScreen(chest);
             } else {
@@ -81,10 +85,8 @@ public class StageChestBlock extends BlockWithEntity {
         UUID chestId = chest.getUuid();
         UUID pid = player.getUuid();
 
-        // 1. Fetch persistent instanced inventory
         DefaultedList<ItemStack> pInvData = corablue.stagehand.world.StageChestManager.getOrCreatePlayerInventory(world.getServer(), chestId, pid);
 
-        // 2. Perform Refill Logic
         boolean isFirstTime = !chest.hasPlayerLooted(pid);
         boolean dirty = false;
 
@@ -93,53 +95,74 @@ public class StageChestBlock extends BlockWithEntity {
                 ItemStack templateItem = chest.getItems().get(i);
                 if (!templateItem.isEmpty()) {
                     ItemStack clone = templateItem.copy();
-                    attachTrackerIfNeeded(clone, chest, pid);
+                    attachTrackerIfNeeded(clone, chest, pid, getSlotUUID(chestId, pid, i));
                     pInvData.set(i, clone);
                 }
             }
             chest.markPlayerLooted(pid);
             dirty = true;
         } else {
-            boolean triggerRefill = false;
-
-            switch (chest.getMode()) {
-                case SINGLE:
-                    break;
-                case TIMER:
-                    if (world.getTime() - chest.getLastLootTime(pid) >= chest.getTimerCooldownTicks()) {
-                        triggerRefill = true;
-                        chest.setLastLootTime(pid, world.getTime());
-                    }
-                    break;
-                case REFILL_ON_DESTROYED:
-                    if (corablue.stagehand.world.StageChestManager.isItemDestroyed(world.getServer(), chestId, pid)) {
-                        triggerRefill = true;
-                    }
-                    break;
-                case INFINITE:
-                    triggerRefill = true;
-                    break;
-            }
-
-            if (triggerRefill) {
-                // Clear the tracker map for this player on this chest
-                corablue.stagehand.world.StageChestManager.resetDestroyedStatus(world.getServer(), chestId, pid);
-
-                for (ItemStack templateItem : chest.getItems()) {
+            // --- NEW: Surgical replacement for REFILL_ON_DESTROYED ---
+            if (chest.getMode() == StageChestBlockEntity.ChestMode.REFILL) {
+                for (int i = 0; i < chest.getItems().size(); i++) {
+                    ItemStack templateItem = chest.getItems().get(i);
                     if (templateItem.isEmpty()) continue;
 
-                    // Safely handles duplicates of the same item in the template
-                    long requiredCount = chest.getItems().stream().filter(s -> ItemStack.areItemsEqual(s, templateItem)).count();
-                    long currentCount = pInvData.stream().filter(s -> ItemStack.areItemsEqual(s, templateItem)).count();
+                    UUID slotUUID = getSlotUUID(chestId, pid, i);
 
-                    if (currentCount < requiredCount) {
+                    // Only refill if THIS EXACT SLOT was destroyed
+                    if (corablue.stagehand.world.StageChestManager.isItemInstanceDestroyed(world.getServer(), chestId, pid, slotUUID)) {
+                        corablue.stagehand.world.StageChestManager.resetSpecificDestroyedItem(world.getServer(), chestId, pid, slotUUID);
+
                         for (int slot = 0; slot < pInvData.size(); slot++) {
                             if (pInvData.get(slot).isEmpty()) {
                                 ItemStack clone = templateItem.copy();
-                                attachTrackerIfNeeded(clone, chest, pid);
+                                attachTrackerIfNeeded(clone, chest, pid, slotUUID);
                                 pInvData.set(slot, clone);
                                 dirty = true;
-                                break;
+                                break; // Move on to the next destroyed template item
+                            }
+                        }
+                    }
+                }
+            }
+            // --- Legacy batch replacement for TIMER and INFINITE ---
+            else {
+                boolean triggerRefill = false;
+
+                switch (chest.getMode()) {
+                    case TIMER:
+                        if (world.getTime() - chest.getLastLootTime(pid) >= chest.getTimerCooldownTicks()) {
+                            triggerRefill = true;
+                            chest.setLastLootTime(pid, world.getTime());
+                        }
+                        break;
+                    case INFINITE:
+                        triggerRefill = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (triggerRefill) {
+                    corablue.stagehand.world.StageChestManager.resetDestroyedStatus(world.getServer(), chestId, pid);
+
+                    for (int i = 0; i < chest.getItems().size(); i++) {
+                        ItemStack templateItem = chest.getItems().get(i);
+                        if (templateItem.isEmpty()) continue;
+
+                        long requiredCount = chest.getItems().stream().filter(s -> ItemStack.areItemsEqual(s, templateItem)).count();
+                        long currentCount = pInvData.stream().filter(s -> ItemStack.areItemsEqual(s, templateItem)).count();
+
+                        if (currentCount < requiredCount) {
+                            for (int slot = 0; slot < pInvData.size(); slot++) {
+                                if (pInvData.get(slot).isEmpty()) {
+                                    ItemStack clone = templateItem.copy();
+                                    attachTrackerIfNeeded(clone, chest, pid, getSlotUUID(chestId, pid, i));
+                                    pInvData.set(slot, clone);
+                                    dirty = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -158,23 +181,42 @@ public class StageChestBlock extends BlockWithEntity {
         UUID chestId = chest.getUuid();
         UUID pid = player.getUuid();
 
-        net.minecraft.inventory.SimpleInventory virtualInventory = new net.minecraft.inventory.SimpleInventory(27) {
+        // Use a local class so we can call a custom finish method easily
+        class InstancedChestInventory extends net.minecraft.inventory.SimpleInventory {
+            private boolean isInitializing = true; // Lock saves during setup
+
+            public InstancedChestInventory() {
+                super(27);
+            }
+
             @Override
             public void markDirty() {
                 super.markDirty();
+
+                // Block saves while the loop is populating the chest
+                if (isInitializing) return;
+
                 DefaultedList<ItemStack> currentItems = DefaultedList.ofSize(27, ItemStack.EMPTY);
-                for(int i=0; i < 27; i++) {
+                for(int i = 0; i < 27; i++) {
                     currentItems.set(i, this.getStack(i));
                 }
                 corablue.stagehand.world.StageChestManager.savePlayerInventory(player.getServer(), chestId, pid, currentItems);
             }
-        };
 
+            public void finishInitializing() {
+                this.isInitializing = false;
+            }
+        }
+
+        InstancedChestInventory virtualInventory = new InstancedChestInventory();
+
+        // Populate the inventory WITHOUT triggering saves
         for (int i = 0; i < pInvData.size(); i++) {
             virtualInventory.setStack(i, pInvData.get(i));
         }
 
-        player.getWorld().playSound(null, player.getBlockPos(), SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1.0f);
+        // Unlock saves now that the inventory is safely loaded
+        virtualInventory.finishInitializing();
 
         player.openHandledScreen(new ExtendedScreenHandlerFactory<BlockPos>() {
             @Override
@@ -187,7 +229,6 @@ public class StageChestBlock extends BlockWithEntity {
             }
             @Override
             public ScreenHandler createMenu(int syncId, PlayerInventory playerInv, PlayerEntity playerEntity) {
-                // Pass a PropertyDelegate declaring they are NOT an owner (0)
                 ArrayPropertyDelegate props = new ArrayPropertyDelegate(3);
                 props.set(0, chest.getMode().ordinal());
                 props.set(1, chest.getTimerCooldownTicks());
@@ -198,10 +239,14 @@ public class StageChestBlock extends BlockWithEntity {
         });
     }
 
-    private void attachTrackerIfNeeded(ItemStack stack, StageChestBlockEntity chest, UUID pid) {
-        if (chest.getMode() == StageChestBlockEntity.ChestMode.REFILL_ON_DESTROYED || chest.getMode() == StageChestBlockEntity.ChestMode.SINGLE) {
+    private UUID getSlotUUID(UUID chestId, UUID pid, int slotIndex) {
+        return java.util.UUID.nameUUIDFromBytes((chestId.toString() + pid.toString() + slotIndex).getBytes());
+    }
+
+    private void attachTrackerIfNeeded(ItemStack stack, StageChestBlockEntity chest, UUID pid, UUID instanceId) {
+        if (chest.getMode() == StageChestBlockEntity.ChestMode.REFILL || chest.getMode() == StageChestBlockEntity.ChestMode.ONCE) {
             stack.set(corablue.stagehand.item.ModComponents.STAGE_CHEST_TRACKER,
-                    new corablue.stagehand.item.StageChestTrackerComponent(chest.getUuid(), pid, java.util.UUID.randomUUID())
+                    new corablue.stagehand.item.StageChestTrackerComponent(chest.getUuid(), pid, instanceId)
             );
         }
     }
@@ -211,7 +256,14 @@ public class StageChestBlock extends BlockWithEntity {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof StageChestBlockEntity chestBlockEntity) {
+                // Scatter the physical chest's template items
                 ItemScatterer.spawn(world, pos, chestBlockEntity);
+
+                // NEW: Purge the persistent data from the world save!
+                if (!world.isClient && world.getServer() != null) {
+                    corablue.stagehand.world.StageChestManager.removeChest(world.getServer(), chestBlockEntity.getUuid());
+                }
+
                 world.updateComparators(pos, this);
             }
             super.onStateReplaced(state, world, pos, newState, moved);

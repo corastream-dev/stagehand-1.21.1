@@ -40,21 +40,59 @@ public class StageChestManager extends PersistentState {
         state.markDirty();
     }
 
-    public static boolean isItemDestroyed(MinecraftServer server, UUID chestId, UUID looterId) {
+    public static boolean isItemInstanceDestroyed(MinecraftServer server, UUID chestId, UUID looterId, UUID itemInstanceId) {
         StageChestManager state = getServerState(server);
         Map<UUID, Set<UUID>> chestData = state.destroyedItems.get(chestId);
         if (chestData != null) {
             Set<UUID> looterData = chestData.get(looterId);
-            return looterData != null && !looterData.isEmpty();
+            return looterData != null && looterData.contains(itemInstanceId);
         }
         return false;
+    }
+
+    public static void resetSpecificDestroyedItem(MinecraftServer server, UUID chestId, UUID looterId, UUID itemInstanceId) {
+        StageChestManager state = getServerState(server);
+        Map<UUID, Set<UUID>> chestData = state.destroyedItems.get(chestId);
+        if (chestData != null) {
+            Set<UUID> looterData = chestData.get(looterId);
+            if (looterData != null) {
+                looterData.remove(itemInstanceId);
+
+                // Keep the maps clean to prevent memory leaks!
+                if (looterData.isEmpty()) {
+                    chestData.remove(looterId);
+                    if (chestData.isEmpty()) {
+                        state.destroyedItems.remove(chestId);
+                    }
+                }
+                state.markDirty();
+            }
+        }
     }
 
     public static void resetDestroyedStatus(MinecraftServer server, UUID chestId, UUID looterId) {
         StageChestManager state = getServerState(server);
         Map<UUID, Set<UUID>> chestData = state.destroyedItems.get(chestId);
+
         if (chestData != null) {
             chestData.remove(looterId);
+
+            // Clean up the parent map if it's now empty
+            if (chestData.isEmpty()) {
+                state.destroyedItems.remove(chestId);
+            }
+            state.markDirty();
+        }
+    }
+
+    public static void removeChest(MinecraftServer server, UUID chestId) {
+        StageChestManager state = getServerState(server);
+        boolean removed = false;
+
+        if (state.destroyedItems.remove(chestId) != null) removed = true;
+        if (state.chestInventories.remove(chestId) != null) removed = true;
+
+        if (removed) {
             state.markDirty();
         }
     }

@@ -11,8 +11,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
@@ -26,18 +24,22 @@ import java.util.UUID;
 public class StageChestBlockEntity extends BlockEntity implements ImplementedInventory, ExtendedScreenHandlerFactory<BlockPos> {
 
     public enum ChestMode {
-        SINGLE,
+        ONCE,
         INFINITE,
         TIMER,
-        REFILL_ON_DESTROYED
+        REFILL
     }
 
     private DefaultedList<ItemStack> inventory = DefaultedList.ofSize(27, ItemStack.EMPTY);
 
     private UUID ownerId = null;
     private UUID chestId;
-    private ChestMode mode = ChestMode.SINGLE;
+    private ChestMode mode = ChestMode.ONCE;
     private int timerCooldownTicks = 24000; // 1 in-game day default
+
+    public float lidAngle = 0.0f;
+    public boolean clientIsOpen = false;
+    public long lastAnimationTime = 0;
 
     // Stores UUID -> Timestamp (for timer) or 1 (for single/refill modes to mark as looted)
     private final Map<UUID, Long> playerLootData = new HashMap<>();

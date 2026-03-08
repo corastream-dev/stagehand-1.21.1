@@ -6,6 +6,9 @@
   "block.stagehand.stage_config": "Stage Configurator",
   "block.stagehand.particle_emitter": "Particle Emitter",
   "block.stagehand.lore_anvil": "Lore Desk",
+  "block.stagehand.stage_chest": "Stage Chest",
+
+  "container.stagehand.stage_chest": "Instanced Chest",
 
   "ui.stagehand.selected": "Selected: ",
   "sound.stagehand.ambience_electric_hum": "Electric Hum",

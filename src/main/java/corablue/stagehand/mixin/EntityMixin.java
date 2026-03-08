@@ -18,14 +18,23 @@ public abstract class EntityMixin {
     private void onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
         Entity entity = (Entity) (Object) this;
 
-        // Ensure we are on the server and the entity is an ItemEntity
-        if (!entity.getWorld().isClient() && entity instanceof ItemEntity itemEntity) {
+        if (!entity.getWorld().isClient()) {
+            ItemStack stack = null;
 
-            // KILLED = Lava, Fire, Cactus, Explosions
-            // DISCARDED = Despawn or Void (or picked up!)
-            // If it was picked up, the stack will be empty. If it died/despawned naturally, it still has a count.
-            if (reason == Entity.RemovalReason.KILLED || (reason == Entity.RemovalReason.DISCARDED && !itemEntity.getStack().isEmpty())) {
-                ItemStack stack = itemEntity.getStack();
+            // Handle dropped items (lava, despawning, void, etc.)
+            if (entity instanceof ItemEntity itemEntity) {
+                if (reason == Entity.RemovalReason.KILLED || (reason == Entity.RemovalReason.DISCARDED && !itemEntity.getStack().isEmpty())) {
+                    stack = itemEntity.getStack();
+                }
+            }
+            // Handle thrown consumable items (splash potions, ender pearls, snowballs)
+            else if (entity instanceof net.minecraft.entity.projectile.thrown.ThrownItemEntity thrownEntity) {
+                if (reason == Entity.RemovalReason.DISCARDED || reason == Entity.RemovalReason.KILLED) {
+                    stack = thrownEntity.getStack();
+                }
+            }
+
+            if (stack != null) {
                 StageChestTrackerComponent tracker = stack.get(ModComponents.STAGE_CHEST_TRACKER);
 
                 if (tracker != null && entity.getServer() != null) {
