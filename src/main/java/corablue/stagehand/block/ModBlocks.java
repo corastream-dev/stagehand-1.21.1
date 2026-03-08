@@ -22,6 +22,11 @@ import net.minecraft.util.math.intprovider.UniformIntProvider;
 
 public class ModBlocks {
 
+    public static final Block STAGE_CHEST_BLOCK = registerBlock("stage_chest",
+            new StageChestBlock(AbstractBlock.Settings.create()
+                    .strength(1)
+                    .nonOpaque()));
+
     public static final Block LORE_ANVIL_BLOCK = registerBlock("lore_anvil",
             new LoreAnvilBlock(AbstractBlock.Settings.create()
                     .strength(1)

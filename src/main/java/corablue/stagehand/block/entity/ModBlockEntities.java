@@ -8,6 +8,7 @@ import net.minecraft.util.Identifier;
 
 public class ModBlockEntities {
 
+    public static BlockEntityType<StageChestBlockEntity> STAGE_CHEST_BE;
     public static BlockEntityType<LoreAnvilBlockEntity> LORE_ANVIL_BE;
     public static BlockEntityType<FatigueCoreBlockEntity> FATIGUE_CORE_BE;
     public static BlockEntityType<AmbienceSpeakerBlockEntity> AMBIENCE_SPEAKER_BE;
@@ -17,6 +18,11 @@ public class ModBlockEntities {
 
     public static void registerBlockEntities() {
 
+        STAGE_CHEST_BE = Registry.register(
+                Registries.BLOCK_ENTITY_TYPE,
+                Identifier.of("stagehand", "stage_chest"),
+                BlockEntityType.Builder.create(StageChestBlockEntity::new, ModBlocks.STAGE_CHEST_BLOCK).build()
+        );
 
         LORE_ANVIL_BE = Registry.register(
                 Registries.BLOCK_ENTITY_TYPE,

@@ -5,6 +5,7 @@ import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.config.StagehandConfig;
+import corablue.stagehand.item.ModComponents;
 import corablue.stagehand.item.ModItemGroups;
 import corablue.stagehand.item.ModItems;
 import corablue.stagehand.network.ModNetwork;
@@ -42,6 +43,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Stagehand implements ModInitializer {
+
+	public static net.minecraft.server.MinecraftServer SERVER;
 	public static final String MOD_ID = "stagehand";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	public static final StagehandConfig CONFIG = StagehandConfig.createAndLoad();
@@ -51,6 +54,11 @@ public class Stagehand implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+
+		//Server hook for chest
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+			SERVER = server;
+		});
 
 		//Create structure folder
 		Path configDir = FabricLoader.getInstance().getConfigDir().resolve("stagehand").resolve("structures");
@@ -64,6 +72,7 @@ public class Stagehand implements ModInitializer {
 		}
 
 		ModItemGroups.registerItemGroups();
+		ModComponents.registerComponentTypes();
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
 		ModBlockEntities.registerBlockEntities();

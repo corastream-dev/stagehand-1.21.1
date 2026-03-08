@@ -2,15 +2,12 @@ package corablue.stagehand.network;
 
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
-import corablue.stagehand.block.entity.LoreAnvilBlockEntity;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
-import corablue.stagehand.world.StageReturnHandler;
 import io.wispforest.owo.network.OwoNetChannel;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Rarity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
 
@@ -18,6 +15,12 @@ public class ModNetwork {
     public static final OwoNetChannel CHANNEL = OwoNetChannel.create(Identifier.of("stagehand", "main"));
 
     public static void init() {
+
+        //Stage Chest Packet
+        CHANNEL.registerServerbound(StageChestUpdatePacket.class, (message, access) -> {
+            StageChestUpdatePacket.handle(message, access.player());
+        });
+
 
         //Lore Anvil Packet
         CHANNEL.registerServerbound(LoreAnvilUpdatePacket.class, (message, access) -> {
