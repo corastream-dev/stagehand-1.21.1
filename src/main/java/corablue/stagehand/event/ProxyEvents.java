@@ -1,6 +1,6 @@
 package corablue.stagehand.event;
 
-import corablue.stagehand.world.data.ProxyStateManager;
+import corablue.stagehand.world.ProxyStateManager;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.BlockState;

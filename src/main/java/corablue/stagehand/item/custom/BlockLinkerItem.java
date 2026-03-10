@@ -2,7 +2,7 @@ package corablue.stagehand.item.custom;
 
 import corablue.stagehand.item.BlockLinkerComponent;
 import corablue.stagehand.item.ModComponents;
-import corablue.stagehand.world.data.ProxyStateManager;
+import corablue.stagehand.world.ProxyStateManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -20,7 +20,7 @@ public class BlockLinkerItem extends Item {
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
         PlayerEntity player = context.getPlayer();
-        if (player == null || context.getWorld().isClient) return ActionResult.SUCCESS;
+        if (player == null || context.getWorld().isClient) return ActionResult.PASS;
 
         ServerWorld world = (ServerWorld) context.getWorld();
         BlockPos clickedPos = context.getBlockPos();

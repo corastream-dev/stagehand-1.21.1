@@ -18,6 +18,7 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -56,9 +57,18 @@ public class Stagehand implements ModInitializer {
 	@Override
 	public void onInitialize() {
 
-		//Server hook for chest
+		//Server starting hook for stage chest tracking
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			SERVER = server;
+		});
+		//And kill
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			SERVER = null;
+		});
+
+		//Remove players from fatigue block list when they leave
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			corablue.stagehand.block.entity.FatigueCoreBlockEntity.onPlayerDisconnect(handler.getPlayer().getUuid());
 		});
 
 		//Create structure folder
@@ -198,7 +208,6 @@ public class Stagehand implements ModInitializer {
 					}));
 
 			//Might not need these anymore
-
 			dispatcher.register(literal("ignorefatigue")
 					.executes(context -> {
 						ServerPlayerEntity player = context.getSource().getPlayer();
@@ -227,12 +236,9 @@ public class Stagehand implements ModInitializer {
 						if (player == null) return 0;
 						boolean successfullyOptedIn = false;
 						for (FatigueCoreBlockEntity core : FatigueCoreBlockEntity.ACTIVE_CORES) {
-							if (core.getWorld() == player.getWorld()) {
-								double distance = Math.sqrt(core.getPos().getSquaredDistance(player.getPos()));
-								if (distance <= core.getRange()) {
-									core.optInPlayer(player.getUuid());
-									successfullyOptedIn = true;
-								}
+							if (core.getWorld() == player.getWorld() && core.isPlayerInRange(player)) {
+								core.optInPlayer(player.getUuid());
+								successfullyOptedIn = true;
 							}
 						}
 						if (successfullyOptedIn) {

@@ -1,6 +1,6 @@
 package corablue.stagehand.mixin;
 
-import corablue.stagehand.world.data.ProxyStateManager;
+import corablue.stagehand.world.ProxyStateManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;

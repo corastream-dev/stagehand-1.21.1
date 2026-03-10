@@ -67,14 +67,7 @@ public class LoreAnvilBlockEntity extends BlockEntity implements ImplementedInve
 
         // Removed Rarity Logic
 
-        this.markDirtyAndSync();
-    }
-
-    public void markDirtyAndSync() {
         this.markDirty();
-        if (this.world != null && !this.world.isClient) {
-            this.world.updateListeners(this.pos, this.getCachedState(), this.getCachedState(), 3);
-        }
     }
 
     // --- NESTED SCREEN HANDLER (Only one definition!) ---

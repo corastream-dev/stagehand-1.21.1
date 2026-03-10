@@ -1,6 +1,7 @@
 package corablue.stagehand.block.entity;
 
 import corablue.stagehand.Stagehand;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FatigueCoreBlockEntity extends BlockEntity {
-    public static final Set<FatigueCoreBlockEntity> ACTIVE_CORES = Collections.newSetFromMap(new WeakHashMap<>());
+    public static final Set<FatigueCoreBlockEntity> ACTIVE_CORES = new HashSet<>();
     private static final Map<UUID, Long> LAST_MESSAGE_TIMES = new HashMap<>();
 
     private UUID owner = null;
@@ -34,7 +35,6 @@ public class FatigueCoreBlockEntity extends BlockEntity {
     private final Set<UUID> optedOutPlayers = new HashSet<>();
     private final Set<UUID> currentlyAffected = new HashSet<>();
 
-    //Unsure about this? Might remove
     @Override
     public void markRemoved() {
         ACTIVE_CORES.remove(this);
@@ -46,14 +46,21 @@ public class FatigueCoreBlockEntity extends BlockEntity {
         ACTIVE_CORES.add(this);
     }
 
+
     public static void tick(World world, BlockPos pos, BlockState state, FatigueCoreBlockEntity be) {
         // Ticking every 20 ticks (1 second)
         if (world.getTime() % 20 != 0) return;
 
-        Box searchBox = new Box(pos).expand(be.range);
-        List<ServerPlayerEntity> playersInRange = world.getEntitiesByClass(
-                ServerPlayerEntity.class, searchBox, player -> player.isAlive() && !player.isSpectator()
-        );
+        List<ServerPlayerEntity> playersInRange = new ArrayList<>();
+        double sqRange = be.range * be.range;
+
+        for (PlayerEntity abstractPlayer : world.getPlayers()) {
+            if (abstractPlayer instanceof ServerPlayerEntity player) {
+                if (player.isAlive() && !player.isSpectator() && player.squaredDistanceTo(pos.toCenterPos()) <= sqRange) {
+                    playersInRange.add(player);
+                }
+            }
+        }
 
         Set<UUID> playersHandledThisTick = new HashSet<>();
 
@@ -129,6 +136,10 @@ public class FatigueCoreBlockEntity extends BlockEntity {
             }
         }
         this.currentlyAffected.clear();
+    }
+
+    public static void onPlayerDisconnect(UUID uuid) {
+        LAST_MESSAGE_TIMES.remove(uuid);
     }
 
     public boolean isPlayerInRange(PlayerEntity player) {
