@@ -81,26 +81,6 @@ public class OmniParticle extends SpriteBillboardParticle {
         return camera.getPos().squaredDistanceTo(this.x, this.y, this.z);
     }
 
-    public static final ParticleTextureSheet SORTED_SHEET = new ParticleTextureSheet() {
-        @SuppressWarnings("deprecation")
-        @Override
-        public BufferBuilder begin(Tessellator tessellator, TextureManager textureManager) {
-            RenderSystem.depthMask(true); // True fixes the clouds rendering over them!
-            RenderSystem.setShaderTexture(0, SpriteAtlasTexture.PARTICLE_ATLAS_TEXTURE);
-            RenderSystem.enableBlend();
-
-            // Standard transparency! No washed-out additive glow.
-            RenderSystem.defaultBlendFunc();
-
-            return tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
-        }
-
-        @Override
-        public String toString() {
-            return "SORTED_SHEET";
-        }
-    };
-
     @Override
     public int getBrightness(float tintMultiplier) {
         // 15728880 is the magic number for full block light and full sky light (15 << 20 | 15 << 4)
@@ -109,7 +89,7 @@ public class OmniParticle extends SpriteBillboardParticle {
 
     @Override
     public ParticleTextureSheet getType() {
-        return this.emissive ? SORTED_SHEET : ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
+        return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @Override

@@ -22,13 +22,15 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
     private final BlockPos blockPos;
     private Identifier currentSound;
     private int currentRange;
+    private float currentPitch;
     private boolean isPlaying;
 
-    public AmbienceSpeakerScreen(BlockPos blockPos, Identifier currentSound, int initialRange, boolean isPlaying) {
+    public AmbienceSpeakerScreen(BlockPos blockPos, Identifier currentSound, int initialRange, boolean isPlaying, float currentPitch) {
         this.blockPos = blockPos;
         this.currentSound = currentSound;
         this.currentRange = initialRange;
         this.isPlaying = isPlaying;
+        this.currentPitch = currentPitch;
     }
 
     @Override
@@ -208,6 +210,28 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
         rangeRow.child(rangeField);
         controls.child(rangeRow);
 
+        //Pitch
+        FlowLayout pitchRow = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        pitchRow.verticalAlignment(VerticalAlignment.CENTER);
+        pitchRow.gap(10);
+
+        pitchRow.child(Components.label(Text.translatable("ui.stagehand.ambience_speaker.pitch")).margins(Insets.right(10)));
+
+        // owo-lib sliders go from 0.0 to 1.0. We map this to 0.5f - 2.0f
+        SliderComponent pitchSlider = Components.slider(Sizing.fixed(100));
+        pitchSlider.value((this.currentPitch - 0.5f) / 1.5f);
+
+        LabelComponent pitchValueLabel = Components.label(Text.literal(String.format("%.2fx", this.currentPitch)));
+
+        pitchSlider.onChanged().subscribe(val -> {
+            this.currentPitch = 0.5f + (float)(val * 1.5f);
+            pitchValueLabel.text(Text.literal(String.format("%.2fx", this.currentPitch)));
+            applyChangesLive();
+        });
+
+        pitchRow.child(pitchSlider).child(pitchValueLabel);
+        controls.child(pitchRow);
+
         FlowLayout buttonRow = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
         buttonRow.gap(10);
 
@@ -245,15 +269,13 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     private void applyChangesLive() {
-        // 1. Send the packet to keep the server in the loop
         ModNetwork.CHANNEL.clientHandle().send(
-                new AmbienceSpeakerUpdatePacket(this.blockPos, this.currentSound, this.currentRange, this.isPlaying)
+                new AmbienceSpeakerUpdatePacket(this.blockPos, this.currentSound, this.currentRange, this.isPlaying, this.currentPitch)
         );
 
-        // 2. Instantly update the client-side block entity so the audio reacts right now
         if (this.client != null && this.client.world != null) {
             if (this.client.world.getBlockEntity(this.blockPos) instanceof AmbienceSpeakerBlockEntity speaker) {
-                speaker.updateSettings(this.currentSound, this.currentRange, this.isPlaying);
+                speaker.updateSettings(this.currentSound, this.currentRange, this.isPlaying, this.currentPitch);
             }
         }
     }

@@ -22,10 +22,13 @@ public class SpeakerSoundInstance extends MovingSoundInstance {
         this.initialRange = speaker.getRange();
         this.repeat = true;
         this.repeatDelay = 0;
+        this.pitch = speaker.getPitch();
         this.x = speaker.getPos().getX() + 0.5;
         this.y = speaker.getPos().getY() + 0.5;
         this.z = speaker.getPos().getZ() + 0.5;
-        updateVolume();
+
+        // Assuming you fixed the OpenAL volume bug here previously!
+        this.volume = Math.max(1.0f, this.initialRange / 16.0f);
     }
 
     // This is the ad-hoc method needed for the Manager to kill the sound
@@ -39,16 +42,15 @@ public class SpeakerSoundInstance extends MovingSoundInstance {
 
     @Override
     public void tick() {
-        // Check redstone power from the block state
         boolean isPowered = this.speaker.getCachedState().get(corablue.stagehand.block.custom.AmbienceSpeakerBlock.POWERED);
 
-        // Kill the instance if the block is broken, toggled off, sound changed,
-        // range changed, OR powered by redstone
+        // Add 'this.pitch != this.speaker.getPitch()' to the kill check
         if (this.speaker.isRemoved() ||
                 !this.speaker.isPlaying() ||
                 isPowered ||
                 !this.speaker.getCurrentSound().equals(this.getId()) ||
-                this.speaker.getRange() != this.initialRange) {
+                this.speaker.getRange() != this.initialRange ||
+                this.pitch != this.speaker.getPitch()) {
 
             this.stopInstance();
         } else {

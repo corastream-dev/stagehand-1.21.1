@@ -94,7 +94,7 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
 
             if (world.isClient) {
                 MinecraftClient.getInstance().setScreen(
-                        new AmbienceSpeakerScreen(pos, speaker.getCurrentSound(), speaker.getRange(), speaker.isPlaying())
+                        new AmbienceSpeakerScreen(pos, speaker.getCurrentSound(), speaker.getRange(), speaker.isPlaying(), speaker.getPitch())
                 );
             }
         }

@@ -5,6 +5,7 @@ import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.config.StagehandConfig;
+import corablue.stagehand.event.ProxyEvents;
 import corablue.stagehand.item.ModComponents;
 import corablue.stagehand.item.ModItemGroups;
 import corablue.stagehand.item.ModItems;
@@ -81,6 +82,7 @@ public class Stagehand implements ModInitializer {
 		ModCriteria.initialize();
 		ModDimensions.register();
 		ModScreenHandlers.registerScreenHandlers();
+		ProxyEvents.register();
 
 		//Admin can now set Stages as worldspawns!
 		//Detect new players and...

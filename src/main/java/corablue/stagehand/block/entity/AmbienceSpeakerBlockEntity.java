@@ -26,6 +26,7 @@ import java.util.UUID;
 public class AmbienceSpeakerBlockEntity extends BlockEntity {
     private UUID owner = null;
     private int range = 16;
+    private float pitch = 1.0f;
     private boolean isPlaying = false;
     private Identifier currentSound = Identifier.of("minecraft", "ambient.cave");
 
@@ -40,6 +41,7 @@ public class AmbienceSpeakerBlockEntity extends BlockEntity {
         if (owner != null) nbt.putUuid("Owner", owner);
         nbt.putInt("Range", range);
         nbt.putBoolean("IsPlaying", isPlaying);
+        nbt.putFloat("Pitch", pitch); // Add this
         if (currentSound != null) nbt.putString("CurrentSound", currentSound.toString());
     }
 
@@ -49,6 +51,7 @@ public class AmbienceSpeakerBlockEntity extends BlockEntity {
         if (nbt.contains("Owner")) this.owner = nbt.getUuid("Owner");
         this.range = nbt.getInt("Range");
         this.isPlaying = nbt.getBoolean("IsPlaying");
+        if (nbt.contains("Pitch")) this.pitch = nbt.getFloat("Pitch"); else this.pitch = 1.0f; // Add this
         if (nbt.contains("CurrentSound")) this.currentSound = Identifier.of(nbt.getString("CurrentSound"));
     }
 
@@ -56,6 +59,7 @@ public class AmbienceSpeakerBlockEntity extends BlockEntity {
     public void setOwner(UUID uuid) { this.owner = uuid; markDirty(); }
     public boolean isOwner(PlayerEntity player) { return owner != null && owner.equals(player.getUuid()); }
 
+    public float getPitch() { return this.pitch; }
     public int getRange() { return this.range; }
     public boolean isPlaying() { return this.isPlaying; }
     public Identifier getCurrentSound() { return this.currentSound; }
@@ -66,10 +70,11 @@ public class AmbienceSpeakerBlockEntity extends BlockEntity {
         corablue.stagehand.client.sound.SpeakerSoundManager.tickSpeaker(be);
     }
 
-    public void updateSettings(Identifier sound, int range, boolean isPlaying) {
+    public void updateSettings(Identifier sound, int range, boolean isPlaying, float pitch) {
         this.currentSound = sound;
         this.range = range;
         this.isPlaying = isPlaying;
+        this.pitch = pitch;
         markDirtyAndSync();
     }
 

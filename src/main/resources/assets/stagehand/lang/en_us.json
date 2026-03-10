@@ -8,6 +8,8 @@
   "block.stagehand.lore_anvil": "Lore Desk",
   "block.stagehand.stage_chest": "Stage Chest",
 
+  "item.stagehand.block_linker": "Blocklinker Wand",
+
   "container.stagehand.stage_chest": "Instanced Chest",
   "container.stagehand.stage_chest_infinite": "Infinite Chest",
   "container.stagehand.stage_chest_timer": "Timed Reset Chest",
@@ -51,6 +53,7 @@
   "command.stagehand.fatigue_opt_in": "You have opted back into this Fatigue Zone.",
   "command.stagehand.not_in_fatigue": "You are not currently inside a Fatigue Zone.",
 
+  "ui.stagehand.ambience_speaker.pitch": "Pitch",
   "ui.stagehand.ambience_speaker.range": "Range",
   "ui.stagehand.ambience_speaker.play": "▶ Play",
   "ui.stagehand.ambience_speaker.stop": "⏹ Stop",

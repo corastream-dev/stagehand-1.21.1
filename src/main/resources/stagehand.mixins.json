@@ -8,10 +8,12 @@
 		"RecipeManagerMixin",
 		"ItemStackMixin",
 		"EntityMixin",
-		"LivingEntityMixin"
+		"LivingEntityMixin",
+		"BlockMixin",
+		"AbstractBlockMixin",
+		"AbstractBlockInvoker"
 	],
 	"client": [
-		"ParticleManagerMixin",
 		"ClientWorldPropertiesMixin"
 	],
 	"injectors": {

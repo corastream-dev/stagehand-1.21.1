@@ -70,13 +70,12 @@ public class ModNetwork {
 
         //Ambience Speaker Packet
         CHANNEL.registerServerbound(AmbienceSpeakerUpdatePacket.class, (message, access) -> {
-            // This runs on the server side
             BlockEntity be = access.player().getWorld().getBlockEntity(message.pos());
 
             if (be instanceof AmbienceSpeakerBlockEntity speaker) {
-                // SECURITY: Check ownership again
                 if (speaker.isOwner(access.player())) {
-                    speaker.updateSettings(message.sound(), message.range(), message.isPlaying());
+                    // FIX: Pass message.pitch()
+                    speaker.updateSettings(message.sound(), message.range(), message.isPlaying(), message.pitch());
                 }
             }
         });

@@ -18,6 +18,16 @@ public class ModComponents {
                     .build()
     );
 
+    //Block linker
+    public static final ComponentType<BlockLinkerComponent> BLOCK_LINKER = Registry.register(
+            Registries.DATA_COMPONENT_TYPE,
+            Identifier.of(Stagehand.MOD_ID, "block_linker"),
+            ComponentType.<BlockLinkerComponent>builder()
+                    .codec(BlockLinkerComponent.CODEC)
+                    .packetCodec(BlockLinkerComponent.PACKET_CODEC)
+                    .build()
+    );
+
     // Call this in your main Stagehand.java initialization!
     public static void registerComponentTypes() {
         Stagehand.LOGGER.info("Registering Data Component Types for " + Stagehand.MOD_ID);

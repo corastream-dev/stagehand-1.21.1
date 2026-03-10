@@ -10,7 +10,8 @@ import net.minecraft.util.Identifier;
 
 public class ModItems {
 
-    //public static final Item PINK_GARNET = registerItem("pink_garnet", new Item(new Item.Settings()));
+    public static final Item BLOCK_LINKER = registerItem("block_linker",
+            new corablue.stagehand.item.custom.BlockLinkerItem(new Item.Settings().maxCount(1)));
 
     private static Item registerItem(String name, Item item){
         return Registry.register(Registries.ITEM, Identifier.of(Stagehand.MOD_ID, name), item);

@@ -25,6 +25,7 @@ public class ModItemGroups {
                         entries.add(ModBlocks.STAGE_RETURN_BLOCK);
                         entries.add(ModBlocks.LORE_ANVIL_BLOCK);
                         entries.add(ModBlocks.STAGE_CHEST_BLOCK);
+                        entries.add(ModItems.BLOCK_LINKER);
                     })
                     .build());
 
