@@ -25,6 +25,7 @@ public abstract class BlockMixin {
             if (targetPos != null) {
                 BlockState targetState = serverWorld.getBlockState(targetPos);
                 targetState.getBlock().onSteppedOn(world, targetPos, targetState, entity);
+                ((AbstractBlockInvoker) targetState.getBlock()).invokeOnEntityCollision(targetState, world, targetPos, entity);
                 ci.cancel();
             }
         }

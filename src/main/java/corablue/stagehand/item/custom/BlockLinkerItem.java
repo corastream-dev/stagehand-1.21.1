@@ -13,6 +13,11 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
+//Blocklinker creates a map of a source and target
+//When you interact with the source, the target is invoked instead
+//There are hooks to onUse and onSteppedOn
+//Create a fence that opens a chest, pressure plate that freezes
+
 public class BlockLinkerItem extends Item {
 
     public BlockLinkerItem(Settings settings) { super(settings); }
@@ -26,10 +31,14 @@ public class BlockLinkerItem extends Item {
         BlockPos clickedPos = context.getBlockPos();
         ItemStack stack = context.getStack();
 
-        // Sneak-click anywhere to clear the wand's memory
+        // Initialize the state manager early so we can use it for everything
+        ProxyStateManager stateManager = ProxyStateManager.getServerState(world);
+
+        // Sneak-click a block to clear its links AND the wand's memory
         if (player.isSneaking()) {
             stack.remove(ModComponents.BLOCK_LINKER);
-            player.sendMessage(Text.literal("Blocklinker memory cleared.").formatted(Formatting.YELLOW), true);
+            stateManager.removeLink(clickedPos);
+            player.sendMessage(Text.literal("Cleared links for this block.").formatted(Formatting.YELLOW), true);
             return ActionResult.SUCCESS;
         }
 
@@ -50,8 +59,20 @@ public class BlockLinkerItem extends Item {
                 return ActionResult.SUCCESS;
             }
 
+            // --- CYCLE DETECTION ---
+            // Trace the chain of target blocks. If any of them point back to our source block, it's a loop!
+            BlockPos currentCheck = clickedPos;
+            while (currentCheck != null) {
+                if (currentCheck.equals(sourcePos)) {
+                    player.sendMessage(Text.literal("Cannot create a recursive link loop!").formatted(Formatting.RED), true);
+                    stack.remove(ModComponents.BLOCK_LINKER);
+                    return ActionResult.SUCCESS;
+                }
+                currentCheck = stateManager.getTarget(currentCheck);
+            }
+            // -----------------------
+
             // Save the link to the world file
-            ProxyStateManager stateManager = ProxyStateManager.getServerState(world);
             stateManager.addLink(sourcePos, clickedPos);
 
             player.sendMessage(Text.literal("Proxy Link established!").formatted(Formatting.GOLD), true);

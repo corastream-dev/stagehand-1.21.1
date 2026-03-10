@@ -11,7 +11,8 @@
 		"LivingEntityMixin",
 		"BlockMixin",
 		"AbstractBlockMixin",
-		"AbstractBlockInvoker"
+		"AbstractBlockInvoker",
+		"PressurePlateMixin"
 	],
 	"client": [
 		"ClientWorldPropertiesMixin"

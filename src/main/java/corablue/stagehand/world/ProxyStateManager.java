@@ -53,6 +53,10 @@ public class ProxyStateManager extends PersistentState {
         if (changed) this.markDirty();
     }
 
+    public Set<BlockPos> getSourcesForTarget(BlockPos target) {
+        return targetsToSources.get(target);
+    }
+
     @Nullable
     public BlockPos getTarget(BlockPos source) {
         return links.get(source);
