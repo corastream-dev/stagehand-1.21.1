@@ -1,6 +1,6 @@
 package corablue.stagehand.client;
 
-import corablue.stagehand.block.custom.StageChestBlock;
+import corablue.stagehand.block.StageChestBlock;
 import corablue.stagehand.block.entity.StageChestBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;

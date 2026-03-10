@@ -26,11 +26,11 @@ public class StageReturnHandler {
 
     public static boolean returnPlayer(ServerPlayerEntity player, FallbackMode mode) {
 
-        // 1. Ask the Global Manager for their Return Data
+        //Ask the Global Manager for their Return Data
         StageManager manager = StageManager.getServerState(player.getServer());
         StageManager.ReturnData returnData = manager.getReturnData(player.getUuid());
 
-        // 2. Try to return them via their Global Memory Cache
+        //Try to return them via their Global Memory Cache
         if (returnData != null) {
             RegistryKey<World> dimKey = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(returnData.dimension()));
             ServerWorld targetWorld = player.getServer().getWorld(dimKey);
@@ -44,7 +44,7 @@ public class StageReturnHandler {
             }
         }
 
-        // --- 3. FALLBACK CONTINGENCIES (No cache found!) ---
+        //Fallback
 
         if (mode == FallbackMode.FORCE_OVERWORLD) {
             ServerWorld overworld = player.getServer().getWorld(World.OVERWORLD);
@@ -81,17 +81,14 @@ public class StageReturnHandler {
     }
 
     private static void executeTeleport(ServerPlayerEntity player, ServerWorld world, double x, double y, double z, float yaw, float pitch) {
-        // 1. Reset state BEFORE teleport
         player.setHealth(player.getMaxHealth());
         player.extinguish();
         player.getAbilities().invulnerable = true; // Temporary safety
         player.setVelocity(0, 0, 0);
         player.fallDistance = 0.0f;
 
-        // 2. Perform Teleport
         player.teleport(world, x, y, z, yaw, pitch);
 
-        // 3. Update GameMode AFTER teleport is confirmed
         if (!world.getRegistryKey().equals(ModDimensions.THE_STAGE)) {
             if (player.interactionManager.getGameMode() == GameMode.ADVENTURE) {
                 player.changeGameMode(GameMode.SURVIVAL);

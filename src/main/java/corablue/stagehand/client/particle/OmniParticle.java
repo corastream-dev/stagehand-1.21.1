@@ -26,13 +26,8 @@ public class OmniParticle extends SpriteBillboardParticle {
     private final boolean rotate;
     private final float rotSpeed;
     private final boolean emissive;
-
-    protected final SpriteProvider spriteProvider;
-
-    // NEW: Define how many ticks it takes to complete one full animation loop.
-    // 20 ticks = 1 second. If your JSON has 4 frames, it plays at 4 frames per second.
-    // If you want it faster, lower this number (e.g., 10 for a half-second loop).
     private final int loopDuration = 16;
+    protected final SpriteProvider spriteProvider;
 
     protected OmniParticle(ClientWorld world, double x, double y, double z,
                            double velocityX, double velocityY, double velocityZ,
@@ -53,8 +48,9 @@ public class OmniParticle extends SpriteBillboardParticle {
 
         this.scale = params.scale();
 
+        //Weird case, people wanna use fog for large haze-like effects
         if (params.getType() == ModParticles.OMNI_FOG) {
-            this.scale *= 6.0f; // Boost fog size by 6X
+            this.scale *= 6.0f;
         }
 
         this.gravityStrength = params.gravity();
@@ -63,7 +59,6 @@ public class OmniParticle extends SpriteBillboardParticle {
 
         this.spriteProvider = spriteProvider;
 
-        // FIXED: Set the initial frame using our loop logic instead of maxAge
         this.setSprite(this.spriteProvider.getSprite(0, loopDuration));
 
         if (this.rotate) {
@@ -77,13 +72,12 @@ public class OmniParticle extends SpriteBillboardParticle {
     }
 
     public double getSquaredDistance(Camera camera) {
-        // Calculates how far away this specific particle is from the player's eyes
         return camera.getPos().squaredDistanceTo(this.x, this.y, this.z);
     }
 
     @Override
     public int getBrightness(float tintMultiplier) {
-        // 15728880 is the magic number for full block light and full sky light (15 << 20 | 15 << 4)
+        // 15728880 is the magic number for full block light
         return this.emissive ? 15728880 : super.getBrightness(tintMultiplier);
     }
 
@@ -96,31 +90,31 @@ public class OmniParticle extends SpriteBillboardParticle {
     public void tick() {
         super.tick();
 
-        // FIXED: Loop the animation!
-        // this.age % loopDuration resets to 0 every time it hits the loop duration.
+        //Animation loop
         if (!this.dead) {
             this.setSprite(this.spriteProvider.getSprite(this.age % loopDuration, loopDuration));
         }
 
-        // 1. Color Interpolation
+        //Color
         float progress = (float)this.age / this.maxAge;
         float cr = MathHelper.lerp(progress, r1, r2);
         float cg = MathHelper.lerp(progress, g1, g2);
         float cb = MathHelper.lerp(progress, b1, b2);
         this.setColor(cr, cg, cb);
 
-        // 2. Alpha Fadeout (last 20%)
+        //Alpha Fadeout
+        //Might change this
         if (this.age > this.maxAge - (this.maxAge * 0.2f)) {
             this.alpha = 1.0f - ((float)(this.age - (this.maxAge * 0.2f)) / (this.maxAge * 0.2f));
         }
 
-        // 3. Lifetime Rotation
+        //Rotation
         if (this.rotate) {
             this.prevAngle = this.angle;
             this.angle += this.rotSpeed;
         }
 
-        // 4. Orbital Velocity (Rotate Velocity Vector)
+        //Orbital Velocity
         if (orbX != 0 || orbY != 0 || orbZ != 0) {
             Vector3f vel = new Vector3f((float)this.velocityX, (float)this.velocityY, (float)this.velocityZ);
             if (orbX != 0) vel.rotateX(orbX);

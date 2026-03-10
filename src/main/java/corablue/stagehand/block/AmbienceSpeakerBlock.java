@@ -1,7 +1,9 @@
-package corablue.stagehand.block.custom;
+package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
+import org.jetbrains.annotations.Nullable;
 import corablue.stagehand.Stagehand;
+import corablue.stagehand.client.gui.AmbienceSpeakerScreen;
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.world.ModDimensions;
@@ -20,17 +22,17 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
-
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.Direction;
 import net.minecraft.block.Block;
-
-import corablue.stagehand.client.gui.AmbienceSpeakerScreen;
 import net.minecraft.client.MinecraftClient;
+
+//Speaker block plays ambient sounds at configurable range for all players
+//Fun little craftable item to add atmosphere to builds
+//Restictable via config to only be placeable in Stage dimension
 
 public class AmbienceSpeakerBlock extends BlockWithEntity {
     public static final MapCodec<AmbienceSpeakerBlock> CODEC = createCodec(AmbienceSpeakerBlock::new);
@@ -43,6 +45,7 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
     }
 
     @Override protected MapCodec<? extends BlockWithEntity> getCodec() { return CODEC; }
+
     @Override public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
 
     @Override
@@ -62,7 +65,6 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
     @Nullable
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
-        // getOpposite() makes the "front" face the player when placed
         return this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite());
     }
 

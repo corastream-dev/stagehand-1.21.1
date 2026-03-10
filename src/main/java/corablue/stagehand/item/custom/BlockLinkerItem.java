@@ -16,7 +16,8 @@ import net.minecraft.util.math.BlockPos;
 //Blocklinker creates a map of a source and target
 //When you interact with the source, the target is invoked instead
 //There are hooks to onUse and onSteppedOn
-//Create a fence that opens a chest, pressure plate that freezes
+//Create a floors that burn or freeze the player by linking to magma/powdered snow
+//Create an item frame that reads a lectern, etc
 
 public class BlockLinkerItem extends Item {
 
@@ -31,7 +32,7 @@ public class BlockLinkerItem extends Item {
         BlockPos clickedPos = context.getBlockPos();
         ItemStack stack = context.getStack();
 
-        // Initialize the state manager early so we can use it for everything
+        // Initialize the state manager
         ProxyStateManager stateManager = ProxyStateManager.getServerState(world);
 
         // Sneak-click a block to clear its links AND the wand's memory

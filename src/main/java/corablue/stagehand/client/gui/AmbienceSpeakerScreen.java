@@ -1,6 +1,8 @@
 package corablue.stagehand.client.gui;
 
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
+import corablue.stagehand.network.ModNetwork;
+import corablue.stagehand.network.AmbienceSpeakerUpdatePacket;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.*;
 import io.wispforest.owo.ui.container.Containers;
@@ -13,9 +15,6 @@ import net.minecraft.text.TextColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
-
-import corablue.stagehand.network.ModNetwork;
-import corablue.stagehand.network.AmbienceSpeakerUpdatePacket;
 
 public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
 
@@ -37,8 +36,6 @@ public class AmbienceSpeakerScreen extends BaseOwoScreen<FlowLayout> {
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
         return OwoUIAdapter.create(this, Containers::verticalFlow);
     }
-
-// Import statements assumed (io.wispforest.owo.ui.*, etc.)
 
     @Override
     protected void build(FlowLayout rootComponent) {

@@ -70,14 +70,12 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
     };
 
     public StageChestBlockEntity(BlockPos pos, BlockState state) {
-        // NOTE: Make sure to add STAGE_CHEST to your ModBlockEntities class!
         super(ModBlockEntities.STAGE_CHEST_BE, pos, state);
     }
 
-    // --- Core Logic ---
     public UUID getUuid() {
         if (this.chestId == null) {
-            this.chestId = UUID.randomUUID(); // Generate a unique ID the first time it's asked
+            this.chestId = UUID.randomUUID();
             this.markDirty();
         }
         return this.chestId;
@@ -110,8 +108,6 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
         return this.timerCooldownTicks;
     }
 
-    // --- Memory Logic ---
-
     public boolean hasPlayerLooted(UUID playerId) {
         return playerLootData.containsKey(playerId);
     }
@@ -129,8 +125,6 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
         playerLootData.put(playerId, time);
         this.markDirty();
     }
-
-    // --- Inventory & GUI ---
 
     @Override
     public DefaultedList<ItemStack> getItems() {
@@ -159,8 +153,6 @@ public class StageChestBlockEntity extends BlockEntity implements ImplementedInv
     public BlockPos getScreenOpeningData(ServerPlayerEntity player) {
         return this.pos;
     }
-
-    // --- NBT Serialization (1.21.1 format) ---
 
     @Override
     protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {

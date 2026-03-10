@@ -6,6 +6,8 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.collection.DefaultedList;
 
+//So the lore anvil can hold onto an item
+
 @FunctionalInterface
 public interface ImplementedInventory extends Inventory {
     DefaultedList<ItemStack> getItems();

@@ -1,7 +1,6 @@
 package corablue.stagehand.block.entity;
 
 import corablue.stagehand.Stagehand;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -15,7 +14,6 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.network.listener.ClientPlayPacketListener;
@@ -48,7 +46,6 @@ public class FatigueCoreBlockEntity extends BlockEntity {
 
 
     public static void tick(World world, BlockPos pos, BlockState state, FatigueCoreBlockEntity be) {
-        // Ticking every 20 ticks (1 second)
         if (world.getTime() % 20 != 0) return;
 
         List<ServerPlayerEntity> playersInRange = new ArrayList<>();
@@ -73,22 +70,19 @@ public class FatigueCoreBlockEntity extends BlockEntity {
 
             playersHandledThisTick.add(uuid);
 
-            // 1. Apply Mining Fatigue III
-            // Duration is 31 ticks to ensure overlap between 20-tick pulses
+            // 1. Apply Mining Fatigue of the level set in the config
             player.addStatusEffect(new StatusEffectInstance(StatusEffects.MINING_FATIGUE, 31, Stagehand.CONFIG.MiningFatigueLevel(), true, false, true));
             be.currentlyAffected.add(uuid);
 
-            // 2. Handle 10-Minute Message
             long currentTime = world.getTime();
             long lastTime = LAST_MESSAGE_TIMES.getOrDefault(uuid, -24000L);
-
             if (currentTime - lastTime >= 12000 && Stagehand.CONFIG.AllowFatigueZoneOptout()) {
                 player.sendMessage(Text.translatable("command.stagehand.fatigue_info"), false);
                 LAST_MESSAGE_TIMES.put(uuid, currentTime);
             }
         }
 
-        // 3. Handle players leaving the zone
+        //Handle players leaving the zone
         Iterator<UUID> it = be.currentlyAffected.iterator();
         while (it.hasNext()) {
             UUID affectedUuid = it.next();
@@ -105,7 +99,7 @@ public class FatigueCoreBlockEntity extends BlockEntity {
                         }
                     }
 
-                    // Remove the effect immediately when they leave all zones
+                    //Remove the effect immediately when they leave all zones
                     if (!stillAffectedElsewhere) {
                         player.removeStatusEffect(StatusEffects.MINING_FATIGUE);
                         LAST_MESSAGE_TIMES.remove(affectedUuid);

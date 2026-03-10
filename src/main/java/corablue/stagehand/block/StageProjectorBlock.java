@@ -1,4 +1,4 @@
-package corablue.stagehand.block.custom;
+package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
@@ -18,6 +18,12 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+//Teleports players to a custom dimension
+//Name defaults to player name, can be renamed with tag
+//Initiates on redstone signal, player teleport range proportional to strength up to 8 blocks
+//Will not take nonowners unless the stage is set to ready in the sister config block
+//There is also an additional warmup charge to help prevent griefing
 
 public class StageProjectorBlock extends BlockWithEntity {
     public static final net.minecraft.state.property.BooleanProperty POWERED = net.minecraft.state.property.Properties.POWERED;
@@ -69,12 +75,12 @@ public class StageProjectorBlock extends BlockWithEntity {
         if (be instanceof StageProjectorBlockEntity projector) {
             projector.setOwner(placer.getUuid());
 
-            // Check if they renamed the projector in an anvil!
+            //Check projector name
             if (itemStack.contains(net.minecraft.component.DataComponentTypes.CUSTOM_NAME)) {
                 projector.setWorldKey(itemStack.getName().getString());
                 placer.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.linked_custom", itemStack.getName().getString()));
             } else {
-                // Default to their username
+                //Default to username
                 projector.setWorldKey(placer.getName().getString());
                 placer.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.linked"));
             }
@@ -84,18 +90,14 @@ public class StageProjectorBlock extends BlockWithEntity {
     @Override
     protected net.minecraft.util.ItemActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
         if (!world.isClient) {
-            // Check if they are holding a renamed Name Tag
+            //Rename
             if (stack.isOf(net.minecraft.item.Items.NAME_TAG) && stack.contains(net.minecraft.component.DataComponentTypes.CUSTOM_NAME)) {
                 BlockEntity be = world.getBlockEntity(pos);
                 if (be instanceof StageProjectorBlockEntity projector) {
-
-                    // Only the owner (or an admin) can relink a projector
                     if (projector.isOwner(player) || player.hasPermissionLevel(2)) {
                         String newKey = stack.getName().getString();
                         projector.setWorldKey(newKey);
                         player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.relinked", newKey), false);
-
-                        // Consume the Name Tag in survival mode
                         if (!player.isCreative()) {
                             stack.decrement(1);
                         }
@@ -120,7 +122,6 @@ public class StageProjectorBlock extends BlockWithEntity {
                 net.minecraft.block.entity.BlockEntity be = world.getBlockEntity(pos);
                 if (be instanceof corablue.stagehand.block.entity.StageProjectorBlockEntity projector) {
 
-                    // 1. Rising Edge: Trigger state, start timer, and LOCK IN the initial radius!
                     if (!isCurrentlyPowered) {
                         world.setBlockState(pos, state.with(POWERED, true), 3);
                         projector.setTeleportRadius(power); // <-- Moved here!
@@ -130,13 +131,13 @@ public class StageProjectorBlock extends BlockWithEntity {
                             world.playSound(null, pos, corablue.stagehand.sound.ModSounds.TELEPORT_CHARGE, net.minecraft.sound.SoundCategory.BLOCKS, 1.0f, 1.0f);
                         }
                     }
-                    // 2. We are already warming up. Only let the radius INCREASE, never step down!
+                    //Protect minimum signal
                     else if (projector.getWarmupTimer() > 0) {
                         projector.setTeleportRadius(Math.max(projector.getTeleportRadius(), power));
                     }
                 }
             }
-            // 3. Falling Edge: The power dropped to 0
+            //Unless the power drops to 0, then cancel
             else if (power == 0 && isCurrentlyPowered) {
                 world.setBlockState(pos, state.with(POWERED, false), 3);
             }
@@ -146,7 +147,7 @@ public class StageProjectorBlock extends BlockWithEntity {
 
     public void executeTeleport(World world, BlockPos pos, BlockState state, StageProjectorBlockEntity projector) {
         int power = projector.getTeleportRadius();
-        if (power == 0) power = 15; // Ultimate fallback just in case of NBT weirdness
+        if (power == 0) power = 15;
 
         BlockPos destination = projector.getOrGenerateStage();
         if (destination != null) {
@@ -161,16 +162,13 @@ public class StageProjectorBlock extends BlockWithEntity {
                 isStageReady = config.isStageReady();
             }
 
-            //Max radius of teleport now 8 blocks
             Box teleportArea = new Box(pos).expand(power * 0.5);
 
-            // Prepare spherical math
-            net.minecraft.util.math.Vec3d center = pos.toCenterPos(); // Get exact center of block
-            double radiusSquared = power * power; // Square it so we don't have to use slow Math.sqrt()
+            //Spherical range...
+            net.minecraft.util.math.Vec3d center = pos.toCenterPos();
+            double radiusSquared = power * power;
 
-            // Get players, but filter out the corners of the box!
             List<ServerPlayerEntity> players = world.getEntitiesByClass(ServerPlayerEntity.class, teleportArea,
-                    // Keep player IF: They are alive AND inside the sphere radius
                     p -> p.isAlive() && p.squaredDistanceTo(center) <= radiusSquared);
 
             for (ServerPlayerEntity player : players) {
@@ -207,29 +205,23 @@ public class StageProjectorBlock extends BlockWithEntity {
 
                     // --- TELEPORT & FIRE EFFECTS ---
                     player.teleport(stageDimension, destX, destY, destZ, player.getYaw(), player.getPitch());
+                    stageDimension.playSound(null, destX, destY, destZ, corablue.stagehand.sound.ModSounds.TELEPORT_FIRE, net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f);
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new corablue.stagehand.network.FlashScreenPayload());
 
-                    // --- NEW: Enforce GameMode based on Whitelist ---
+                    //Check whitelist for gamemode
                     if (stageConfig != null) {
                         if (stageConfig.isBuilder(player)) {
-                            // Owner or Builder -> Survival (Standard Build Mode)
                             if (!player.isCreative() && !player.isSpectator()) {
                                 player.changeGameMode(net.minecraft.world.GameMode.SURVIVAL);
                             }
                             player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.welcome_builder"), true);
                         } else {
-                            // Visitor -> Adventure Mode
                             if (!player.isCreative() && !player.isSpectator()) {
                                 player.changeGameMode(net.minecraft.world.GameMode.ADVENTURE);
                             }
                             player.sendMessage(net.minecraft.text.Text.translatable("ui.stagehand.stage_projector.welcome_visitor"), true);
                         }
                     }
-
-                    // 1. Play the "Boom" sound in the new dimension right where they landed
-                    stageDimension.playSound(null, destX, destY, destZ, corablue.stagehand.sound.ModSounds.TELEPORT_FIRE, net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f);
-
-                    // 2. Send the Network Packet to trigger the blinding white screen flash!
-                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new corablue.stagehand.network.FlashScreenPayload());
                 }
             }
         }

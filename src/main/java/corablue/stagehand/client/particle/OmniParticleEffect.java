@@ -19,7 +19,7 @@ public record OmniParticleEffect(
         boolean emissive
 ) implements ParticleEffect {
 
-    // --- JSON CODEC (For /particle command) ---
+    //I have created a monster
     public static MapCodec<OmniParticleEffect> createCodec(ParticleType<OmniParticleEffect> particleType) {
         return RecordCodecBuilder.mapCodec(instance -> instance.group(
                 Codec.FLOAT.fieldOf("r1").forGetter(OmniParticleEffect::r1),
@@ -40,8 +40,7 @@ public record OmniParticleEffect(
                 new OmniParticleEffect(particleType, r1, g1, b1, r2, g2, b2, s, grav, life, ox, oy, oz, rot, emissive)));
     }
 
-    // --- PACKET CODEC (Network Sync) ---
-    // Fixed: Implemented manually to bypass tuple limit
+    //Servers please forgive me
     public static PacketCodec<RegistryByteBuf, OmniParticleEffect> createPacketCodec(ParticleType<OmniParticleEffect> particleType) {
         return PacketCodec.of(
                 (value, buf) -> {

@@ -29,8 +29,6 @@ public class StageChestManager extends PersistentState {
 
     public StageChestManager() {}
 
-    // --- Core API ---
-
     public static void markItemDestroyed(MinecraftServer server, UUID chestId, UUID looterId, UUID itemInstanceId) {
         StageChestManager state = getServerState(server);
         state.destroyedItems
@@ -77,7 +75,6 @@ public class StageChestManager extends PersistentState {
         if (chestData != null) {
             chestData.remove(looterId);
 
-            // Clean up the parent map if it's now empty
             if (chestData.isEmpty()) {
                 state.destroyedItems.remove(chestId);
             }
@@ -97,8 +94,6 @@ public class StageChestManager extends PersistentState {
         }
     }
 
-    // --- Inventory API ---
-
     public static DefaultedList<ItemStack> getOrCreatePlayerInventory(MinecraftServer server, UUID chestId, UUID looterId) {
         StageChestManager state = getServerState(server);
         return state.chestInventories
@@ -113,8 +108,6 @@ public class StageChestManager extends PersistentState {
                 .put(looterId, inventory);
         state.markDirty();
     }
-
-    // --- State Saving and Loading ---
 
     public static StageChestManager getServerState(MinecraftServer server) {
         PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();

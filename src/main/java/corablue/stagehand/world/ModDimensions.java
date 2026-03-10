@@ -6,7 +6,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 public class ModDimensions {
-    // This creates a reference to our custom dimension
+
     public static final RegistryKey<World> THE_STAGE = RegistryKey.of(
             RegistryKeys.WORLD,
             Identifier.of("stagehand", "the_stage")

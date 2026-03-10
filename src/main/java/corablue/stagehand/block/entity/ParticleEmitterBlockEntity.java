@@ -1,6 +1,6 @@
 package corablue.stagehand.block.entity;
 
-import corablue.stagehand.block.custom.ParticleEmitterBlock;
+import corablue.stagehand.block.ParticleEmitterBlock;
 import corablue.stagehand.client.particle.OmniParticleEffect;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -23,21 +23,21 @@ import java.util.UUID;
 
 public class ParticleEmitterBlockEntity extends BlockEntity {
 
-    // --- Settings / Default Values ---
+    //Wheee so many settings!
     private UUID owner = null;
     private boolean isActive = true;
     private Identifier particleType = Identifier.of("stagehand", "omni_spark");
 
-    // Colors
+    //Colors
     private float c1R = 1.0f; private float c1G = 1.0f; private float c1B = 1.0f;
     private float c2R = 1.0f; private float c2G = 1.0f; private float c2B = 1.0f;
     private boolean useLifetimeColor = false; // Toggle: Random vs Lifetime
 
-    // Spawning Area & Offsets
+    //Spawning Area & Offsets
     private float offsetX = 0.0f; private float offsetY = 0.5f; private float offsetZ = 0.0f;
     private float areaX = 0.5f; private float areaY = 0.5f; private float areaZ = 0.5f;
 
-    // Behavior
+    //Behavior
     private double amountPerTick = 1;
     private double spawnAccumulator = 0;
     private int lifetime = 40;
@@ -46,19 +46,18 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     private boolean rotate = false;
     private boolean emissive = false;
 
-    // Velocity Ranges
+    //Velocity Ranges
     private float minVelX = -0.05f; private float maxVelX = 0.05f;
     private float minVelY = 0.02f;  private float maxVelY = 0.08f;
     private float minVelZ = -0.05f; private float maxVelZ = 0.05f;
 
-    // Orbital Velocity (Angular velocity of vector)
+    //Orbital Velocity (Angular velocity of vector)
     private float orbX = 0.0f; private float orbY = 0.0f; private float orbZ = 0.0f;
 
     public ParticleEmitterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PARTICLE_EMITTER_BE, pos, state);
     }
 
-    // --- Getters ---
     public Identifier getParticleType() { return this.particleType; }
     public float getC1R() { return this.c1R; } public float getC1G() { return this.c1G; } public float getC1B() { return this.c1B; }
     public float getC2R() { return this.c2R; } public float getC2G() { return this.c2G; } public float getC2B() { return this.c2B; }
@@ -79,7 +78,6 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     public boolean getRotate() { return this.rotate; }
     public boolean getEmissive() { return this.emissive; }
 
-    // --- Security ---
     public void setOwner(UUID uuid) {
         this.owner = uuid;
         this.markDirtyAndSync();
@@ -88,11 +86,10 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         return this.owner != null && this.owner.equals(player.getUuid());
     }
 
-    // --- Client Tick ---
     public static void clientTick(World world, BlockPos pos, BlockState state, ParticleEmitterBlockEntity be) {
 
         // ==========================================
-        // 1. DECORATIVE HOLOGRAM (Smooth + Sine Wave)
+        // DECORATIVE HOLOGRAM (Smooth + Sine Wave)
         // ==========================================
         ParticleType<?> rawDotType = Registries.PARTICLE_TYPE.get(Identifier.of("stagehand", "omni_dot"));
         if (rawDotType != null) {
@@ -101,34 +98,25 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
 
             double radius = 0.25;
             double orbitSpeed = 0.1;
-
-            // This is the distance "out" from the center of the block
             double baseForwardOffset = 0.3;
-
-            // Sine Wave variables
             double sineSpeed = 0.1;
             double sineAmplitude = 0.1;
-
             long time = world.getTime();
 
-            // 1. Get the Facing Direction
             Direction facing = state.get(ParticleEmitterBlock.FACING);
 
             for (int i = 0; i < 3; i++) {
                 double offset = i * (2 * Math.PI / 3);
 
-                // --- CALCULATE LOCAL OFFSETS ---
                 double curAngle = (time * orbitSpeed) + offset;
                 double localX = Math.cos(curAngle) * radius;
                 double localY = baseForwardOffset + (Math.sin(time * sineSpeed) * sineAmplitude);
                 double localZ = Math.sin(curAngle) * radius;
-
                 double nextAngle = ((time + 1) * orbitSpeed) + offset;
                 double nextLocalX = Math.cos(nextAngle) * radius;
                 double nextLocalY = baseForwardOffset + (Math.sin((time + 1) * sineSpeed) * sineAmplitude);
                 double nextLocalZ = Math.sin(nextAngle) * radius;
 
-                // --- ROTATE TO WORLD SPACE ---
                 double[] curPos = rotateVector(localX, localY, localZ, facing);
                 double curWorldX = pos.getX() + 0.5 + curPos[0];
                 double curWorldY = pos.getY() + 0.5 + curPos[1];
@@ -139,20 +127,17 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
                 double nextWorldY = pos.getY() + 0.5 + nextPos[1];
                 double nextWorldZ = pos.getZ() + 0.5 + nextPos[2];
 
-                // --- CALCULATE VELOCITY ---
                 double velX = nextWorldX - curWorldX;
                 double velY = nextWorldY - curWorldY;
                 double velZ = nextWorldZ - curWorldZ;
 
-                // FIXED: Use the new constructor with all arguments
-                // r1, g1, b1 (Cyan), r2, g2, b2 (Cyan), scale, gravity, lifetime, orbX, orbY, orbZ, rotate
                 OmniParticleEffect hologramEffect = new OmniParticleEffect(
                         omniDotType,
-                        0.0f, 1.0f, 1.0f, // Start Color
-                        0.0f, 1.0f, 1.0f, // End Color
-                        0.25f, 0.0f, 2,   // Scale, Gravity, Lifetime
-                        0.0f, 0.0f, 0.0f, // Orbital Velocity (None)
-                        false, true             // Rotate, Emissive
+                        0.0f, 1.0f, 1.0f,       // Start Color
+                        0.0f, 1.0f, 1.0f,          // End Color
+                        0.25f, 0.0f, 2,     // Scale, Gravity, Lifetime
+                        0.0f, 0.0f, 0.0f,       // Orbital Velocity (None)
+                        false, true                       // Rotate, Emissive
                 );
 
                 world.addParticle(hologramEffect, curWorldX, curWorldY, curWorldZ, velX, velY, velZ);
@@ -160,7 +145,7 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         }
 
         // ==========================================
-        // 2. FUNCTIONAL EMITTER
+        // FUNCTIONAL EMITTER
         // ==========================================
 
         if (!be.isActive || state.get(ParticleEmitterBlock.POWERED)) return;
@@ -216,7 +201,6 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         }
     }
 
-    // --- Update Settings ---
     public void updateSettings(
             Identifier type,
             float r1, float g1, float b1, float r2, float g2, float b2, boolean useLifetimeColor,
@@ -249,7 +233,6 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
     }
 
     private static double[] rotateVector(double x, double y, double z, Direction facing) {
-        // (Same as before)
         switch (facing) {
             case UP:    return new double[]{ x,  y,  z};
             case DOWN:  return new double[]{ x, -y, -z};
@@ -333,7 +316,6 @@ public class ParticleEmitterBlockEntity extends BlockEntity {
         if (nbt.contains("Emissive")) this.emissive = nbt.getBoolean("Emissive");
     }
 
-    // --- Network Syncing ---
     @Nullable
     @Override
     public Packet<ClientPlayPacketListener> toUpdatePacket() {

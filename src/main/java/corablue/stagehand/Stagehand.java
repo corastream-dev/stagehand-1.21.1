@@ -100,7 +100,6 @@ public class Stagehand implements ModInitializer {
 			ServerPlayerEntity player = handler.getPlayer();
 			StageManager manager = StageManager.getServerState(server);
 
-			// --- NEW: Auto-Setup Default Hub ---
 			String defaultHub = CONFIG.DefaultHubStage();
 			if (defaultHub != null && !defaultHub.isEmpty()) {
 

@@ -1,7 +1,8 @@
-package corablue.stagehand.block.custom;
+package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.Stagehand;
+import corablue.stagehand.client.gui.ParticleEmitterScreen;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.block.entity.ParticleEmitterBlockEntity;
 import corablue.stagehand.world.ModDimensions;
@@ -24,14 +25,14 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
+import net.minecraft.client.MinecraftClient;
 import org.jetbrains.annotations.Nullable;
 
-// If you haven't made the screen yet, this import will show an error. That is expected for now!
-import corablue.stagehand.client.gui.ParticleEmitterScreen;
-import net.minecraft.client.MinecraftClient;
+//Particle Emitter is a full GUI workstation for creating particle effects
+//Many custom art particles
+//Fun little craftable item to add atmosphere to builds
+//Restictable via config to only be placeable in Stage dimension
 
 public class ParticleEmitterBlock extends BlockWithEntity {
     public static final MapCodec<ParticleEmitterBlock> CODEC = createCodec(ParticleEmitterBlock::new);
@@ -56,8 +57,6 @@ public class ParticleEmitterBlock extends BlockWithEntity {
 
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
-        // If you click a wall (NORTH), getSide is NORTH.
-        // The blue screen (model top) will now point NORTH (away from the wall).
         return this.getDefaultState()
                 .with(FACING, ctx.getSide())
                 .with(POWERED, ctx.getWorld().isReceivingRedstonePower(ctx.getBlockPos()));
@@ -93,7 +92,6 @@ public class ParticleEmitterBlock extends BlockWithEntity {
         BlockEntity be = world.getBlockEntity(pos);
 
         if (be instanceof ParticleEmitterBlockEntity emitter) {
-            // Keep your standard Stagehand security check
             if (!emitter.isOwner(player)) {
                 if (!world.isClient) {
                     player.sendMessage(Text.translatable("ui.stagehand.particle_emitter.not_owner"), true);
@@ -124,14 +122,13 @@ public class ParticleEmitterBlock extends BlockWithEntity {
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof ParticleEmitterBlockEntity emitter) {
 
-            // 1. Read the saved custom data from the broken item
+            //Read the nbt data so we can initialize it when placed
+            //There's like half a second it outputs default particles but that's an acceptable quirk
             NbtComponent customData = itemStack.get(DataComponentTypes.CUSTOM_DATA);
             if (customData != null) {
-                // Pass the NBT straight back into your existing readNbt logic!
                 emitter.readNbt(customData.copyNbt(), world.getRegistryManager());
             }
 
-            // 2. Set the owner (doing this after reading NBT ensures the *new* placer gets ownership)
             if (placer != null) {
                 emitter.setOwner(placer.getUuid());
             }

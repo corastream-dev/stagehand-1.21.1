@@ -6,7 +6,7 @@ import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 
 public class ModCriteria {
-    // Reuse TickCriterion for simple triggers! No custom Codecs or classes needed.
+    // Reuse TickCriterion for simple triggers!
     public static final TickCriterion AUTHOR_ITEM = Registry.register(
             Registries.CRITERION,
             Identifier.of("stagehand", "author_item"),
@@ -27,6 +27,6 @@ public class ModCriteria {
 
 
     public static void initialize() {
-        // Call this in your main init so the registry fires
+        //Dont delete meeeee
     }
 }

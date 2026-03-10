@@ -70,7 +70,6 @@ public class LoreAnvilBlockEntity extends BlockEntity implements ImplementedInve
         this.markDirty();
     }
 
-    // --- NESTED SCREEN HANDLER (Only one definition!) ---
     public static class LoreAnvilScreenHandler extends ScreenHandler {
         private final LoreAnvilBlockEntity entity;
 
@@ -82,20 +81,17 @@ public class LoreAnvilBlockEntity extends BlockEntity implements ImplementedInve
             super(ModScreenHandlers.LORE_ANVIL, syncId);
             this.entity = entity;
 
-            // 1. INPUT SLOT (Center of the top area)
-            // Let's move it down a bit to Y=45 so it sits nicely between Name and Lore
+            //Input slot
             this.addSlot(new Slot(entity, 0, 80, 45));
 
-            // 2. PLAYER INVENTORY (Moved down for Generic 54 texture)
-            // In generic_54, the inventory starts at Y = 140
+            //Inventory
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 9; ++j) {
                     this.addSlot(new Slot(inventory, j + i * 9 + 9, 8 + j * 18, 140 + i * 18));
                 }
             }
 
-            // 3. HOTBAR (Moved down)
-            // Y = 198 is standard for generic_54
+            //Hotbar
             for (int i = 0; i < 9; ++i) {
                 this.addSlot(new Slot(inventory, i, 8 + i * 18, 198));
             }

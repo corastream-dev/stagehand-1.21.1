@@ -1,5 +1,6 @@
 package corablue.stagehand.client.sound;
 
+import corablue.stagehand.block.AmbienceSpeakerBlock;
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -27,11 +28,9 @@ public class SpeakerSoundInstance extends MovingSoundInstance {
         this.y = speaker.getPos().getY() + 0.5;
         this.z = speaker.getPos().getZ() + 0.5;
 
-        // Assuming you fixed the OpenAL volume bug here previously!
         this.volume = Math.max(1.0f, this.initialRange / 16.0f);
     }
 
-    // This is the ad-hoc method needed for the Manager to kill the sound
     public void stopInstance() {
         this.setDone();
     }
@@ -42,9 +41,8 @@ public class SpeakerSoundInstance extends MovingSoundInstance {
 
     @Override
     public void tick() {
-        boolean isPowered = this.speaker.getCachedState().get(corablue.stagehand.block.custom.AmbienceSpeakerBlock.POWERED);
+        boolean isPowered = this.speaker.getCachedState().get(AmbienceSpeakerBlock.POWERED);
 
-        // Add 'this.pitch != this.speaker.getPitch()' to the kill check
         if (this.speaker.isRemoved() ||
                 !this.speaker.isPlaying() ||
                 isPowered ||
@@ -65,26 +63,18 @@ public class SpeakerSoundInstance extends MovingSoundInstance {
             return;
         }
 
-        // 1. Calculate the exact distance from the player to the speaker
         double distance = Math.sqrt(player.squaredDistanceTo(this.x, this.y, this.z));
         distance -= 1;
-
-        // 2. Define our custom fade boundaries
-        double fadeStart = 1.0; // Stay at 100% volume up to 1 block away
-        double fadeEnd = this.initialRange; // Hit 0% volume exactly at this block distance
+        double fadeStart = 1.0;
+        double fadeEnd = this.initialRange;
 
         if (distance <= fadeStart) {
-            // Player is inside the 1-block bubble.
-            // (We keep the range/16.0f math so ranges like 32 or 64 still scale up OpenAL's 3D panning)
             this.volume = Math.max(1.0f, this.initialRange / 16.0f);
         } else if (distance >= fadeEnd) {
-            // Player crossed the boundary. Force absolute silence!
             this.volume = 0.0f;
         } else {
-            // Player is walking away. Interpolate the volume down to 0 perfectly.
             float distancePercent = (float) ((distance - fadeStart) / (fadeEnd - fadeStart));
             float rawVolume = 1.0f - distancePercent;
-
             float maxVol = Math.max(1.0f, this.initialRange / 16.0f);
             this.volume = rawVolume * maxVol;
         }

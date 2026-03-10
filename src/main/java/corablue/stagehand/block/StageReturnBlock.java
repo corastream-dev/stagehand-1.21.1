@@ -1,16 +1,13 @@
-package corablue.stagehand.block.custom;
+package corablue.stagehand.block;
 
-import corablue.stagehand.block.entity.StageConfigBlockEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
-import java.util.List;
+//Very simple, when powered returns the player to the same place they left their previous world
+//If set in config, returns player to their spawnpoint instead
 
 public class StageReturnBlock extends Block {
     public static final net.minecraft.state.property.BooleanProperty POWERED = net.minecraft.state.property.Properties.POWERED;
@@ -20,7 +17,6 @@ public class StageReturnBlock extends Block {
         this.setDefaultState(this.stateManager.getDefaultState().with(POWERED, false));
     }
 
-    // Tell the block to register this property
     @Override
     protected void appendProperties(net.minecraft.state.StateManager.Builder<net.minecraft.block.Block, BlockState> builder) {
         builder.add(POWERED);
@@ -37,26 +33,21 @@ public class StageReturnBlock extends Block {
             boolean isCurrentlyPowered = state.get(POWERED);
             int power = world.getReceivedRedstonePower(pos);
 
-            // Rising Edge: It just received power!
             if (power > 0 && !isCurrentlyPowered) {
-                // Lock the block into the "Powered" state
                 world.setBlockState(pos, state.with(POWERED, true), 3);
 
-                // Grab players in the radius
-                net.minecraft.util.math.Box teleportArea = new net.minecraft.util.math.Box(pos).expand(power);
+                net.minecraft.util.math.Box teleportArea = new net.minecraft.util.math.Box(pos).expand(power * 0.5f);
                 java.util.List<ServerPlayerEntity> players = world.getEntitiesByClass(ServerPlayerEntity.class, teleportArea, net.minecraft.entity.Entity::isAlive);
 
                 for (ServerPlayerEntity player : players) {
-
-                    // Attempt the return teleport
                     if (corablue.stagehand.world.StageReturnHandler.returnPlayer(player, corablue.stagehand.world.StageReturnHandler.FallbackMode.FORCE_OVERWORLD)) {
                         // TELEPORT SUCCESSFUL!
+                        // Might wanna do something here later
                     }
                 }
             }
-            // Falling Edge: The power dropped to 0 (button popped out)
+            //Reset
             else if (power == 0 && isCurrentlyPowered) {
-                // Unlock the block so it can fire again later
                 world.setBlockState(pos, state.with(POWERED, false), 3);
             }
         }

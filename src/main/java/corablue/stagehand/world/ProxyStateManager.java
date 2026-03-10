@@ -28,7 +28,7 @@ public class ProxyStateManager extends PersistentState {
     public void removeLink(BlockPos pos) {
         boolean changed = false;
 
-        // 1. If the block broken was a SOURCE, remove its link
+        //If the block broken was a SOURCE, remove its link
         BlockPos target = links.remove(pos);
         if (target != null) {
             changed = true;
@@ -41,7 +41,7 @@ public class ProxyStateManager extends PersistentState {
             }
         }
 
-        // 2. If the block broken was a TARGET, remove all sources pointing to it instantly
+        //If the block broken was a TARGET, remove all sources pointing to it instantly
         Set<BlockPos> pointingSources = targetsToSources.remove(pos);
         if (pointingSources != null) {
             for (BlockPos source : pointingSources) {
@@ -95,7 +95,6 @@ public class ProxyStateManager extends PersistentState {
                 ProxyStateManager::createFromNbt,
                 null
         );
-        // This creates a "stagehand_proxy_links.dat" file in the world folder
         return world.getPersistentStateManager().getOrCreate(type, "stagehand_proxy_links");
     }
 }

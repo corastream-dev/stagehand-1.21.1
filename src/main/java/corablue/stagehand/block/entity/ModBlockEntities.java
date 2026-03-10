@@ -54,9 +54,6 @@ public class ModBlockEntities {
                 BlockEntityType.Builder.create(StageConfigBlockEntity::new, ModBlocks.STAGE_CONFIG_BLOCK).build()
         );
 
-        // 2. Initialize the Particle Emitter here
-        // (Assuming your block is named PARTICLE_EMITTER_BLOCK in ModBlocks,
-        //  change it if you named it something else!)
         PARTICLE_EMITTER_BE = Registry.register(
                 Registries.BLOCK_ENTITY_TYPE,
                 Identifier.of("stagehand", "particle_emitter"),

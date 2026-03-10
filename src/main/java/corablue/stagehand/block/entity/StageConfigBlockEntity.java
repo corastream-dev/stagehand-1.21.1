@@ -46,7 +46,6 @@ public class StageConfigBlockEntity extends BlockEntity {
     public String getBuilderWhitelist() { return this.builderWhitelist; }
     public void setBuilderWhitelist(String whitelist) { this.builderWhitelist = whitelist; markDirtyAndSync(); }
 
-    // --- NBT Saving & Loading ---
     @Override
     public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         super.writeNbt(nbt, registryLookup);
@@ -63,7 +62,6 @@ public class StageConfigBlockEntity extends BlockEntity {
         this.builderWhitelist = nbt.getString("BuilderWhitelist");
     }
 
-    // --- Client Synchronization Methods ---
     @Nullable
     @Override
     public Packet<ClientPlayPacketListener> toUpdatePacket() {

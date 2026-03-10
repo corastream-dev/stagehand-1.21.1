@@ -19,20 +19,13 @@ import java.util.UUID;
 
 public class StageManager extends PersistentState {
 
-    // --- Global Hub & First Join Tracking ---
     private String hubDimension = "";
     private BlockPos hubPos = null;
     private final Set<UUID> knownPlayers = new HashSet<>();
-
-    // --- Global Return Roster ---
     public record ReturnData(String dimension, double x, double y, double z, float yaw, float pitch) {}
     private final Map<UUID, ReturnData> playerReturns = new HashMap<>();
-
-    // --- NEW: Spiral Stage Allocation ---
     private int nextStageIndex = 0;
     private final Map<UUID, BlockPos> playerStages = new HashMap<>();
-
-    // A 1000-block radius means each stage requires a 2000x2000 block cell to prevent bleeding.
     private static final int STAGE_SPACING = 2000;
 
     public static StageManager createFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
@@ -129,7 +122,6 @@ public class StageManager extends PersistentState {
         return nbt;
     }
 
-    // --- Admin Hub Setters ---
     public void setGlobalHub(String dimension, BlockPos pos) {
         this.hubDimension = dimension;
         this.hubPos = pos;
@@ -138,7 +130,6 @@ public class StageManager extends PersistentState {
     public String getHubDimension() { return this.hubDimension; }
     public BlockPos getHubPos() { return this.hubPos; }
 
-    // --- First Join Check ---
     public boolean isNewPlayer(UUID uuid) {
         if (knownPlayers.contains(uuid)) return false;
         knownPlayers.add(uuid);
@@ -146,7 +137,6 @@ public class StageManager extends PersistentState {
         return true;
     }
 
-    // --- Global Return Logic ---
     public void saveReturnData(UUID uuid, String dimension, double x, double y, double z, float yaw, float pitch) {
         this.playerReturns.put(uuid, new ReturnData(dimension, x, y, z, yaw, pitch));
         this.markDirty();
@@ -161,12 +151,6 @@ public class StageManager extends PersistentState {
         this.markDirty();
     }
 
-    // --- NEW: Spiral Grid Logic ---
-
-    /**
-     * Retrieves the player's saved Stage coordinates, or assigns them a new location
-     * on the spiral grid if they don't have one yet.
-     */
     public BlockPos getOrCreatePlayerStage(UUID uuid) {
         if (playerStages.containsKey(uuid)) {
             return playerStages.get(uuid);
@@ -180,10 +164,6 @@ public class StageManager extends PersistentState {
         return newPos;
     }
 
-    /**
-     * Generates a square spiral expanding outwards from 0,0.
-     * Maps index 0 -> (0,0), index 1 -> (1,0), index 2 -> (1,-1), index 3 -> (0,-1), etc.
-     */
     private BlockPos calculateSpiralPos(int index, int spacing) {
         if (index == 0) return new BlockPos(0, 64, 0); // Assuming Y=64 is the baseline
 

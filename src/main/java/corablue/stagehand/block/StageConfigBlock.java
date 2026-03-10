@@ -1,4 +1,4 @@
-package corablue.stagehand.block.custom;
+package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
@@ -15,6 +15,10 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+
+//Configurator block for each stage 2000x2000 chunk
+//Sets whitelist and ready status (unready stages will only teleport the owner)
+//Links on placement with its partner Stage Projector
 
 public class StageConfigBlock extends BlockWithEntity {
     public static final MapCodec<StageConfigBlock> CODEC = createCodec(StageConfigBlock::new);
