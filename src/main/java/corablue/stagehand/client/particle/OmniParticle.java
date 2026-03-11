@@ -11,6 +11,7 @@ import net.minecraft.util.math.MathHelper;
 import org.joml.Vector3f;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
@@ -18,8 +19,64 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.render.Camera;
+import org.jetbrains.annotations.Nullable;
 
 public class OmniParticle extends SpriteBillboardParticle {
+
+    // --- Custom 1.21.1 Texture Sheets ---
+
+    public static final ParticleTextureSheet PARTICLE_SHEET_ADDITIVE = new ParticleTextureSheet() {
+        @Nullable
+        @Override
+        public BufferBuilder begin(Tessellator tessellator, TextureManager textureManager) {
+            RenderSystem.depthMask(false);
+            RenderSystem.setShaderTexture(0, SpriteAtlasTexture.PARTICLE_ATLAS_TEXTURE);
+            RenderSystem.enableBlend();
+            // Source Alpha + One = Glowing/Bright Overlap
+            RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE);
+            return tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
+        }
+
+        @Override
+        public String toString() {
+            return "STAGEHAND_ADDITIVE";
+        }
+    };
+
+    public static final ParticleTextureSheet PARTICLE_SHEET_SOFT_TRANSLUCENT = new ParticleTextureSheet() {
+        @Nullable
+        @Override
+        public BufferBuilder begin(Tessellator tessellator, TextureManager textureManager) {
+            RenderSystem.depthMask(false); // Prevents muddy intersection clipping
+            RenderSystem.setShaderTexture(0, SpriteAtlasTexture.PARTICLE_ATLAS_TEXTURE);
+            RenderSystem.enableBlend();
+            // Standard Blending = Allows dark colors, but smooth overlap due to depth mask
+            RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
+            return tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
+        }
+
+        @Override
+        public String toString() {
+            return "STAGEHAND_SOFT_TRANSLUCENT";
+        }
+    };
+
+    @Override
+    public float getSize(float tickDelta) {
+        float exactAge = this.age + tickDelta;
+        float fadeStart = this.maxAge * 0.8f;
+        float fadeDuration = this.maxAge * 0.2f;
+
+        // If in the final 20% of life, shrink to 0
+        if (exactAge > fadeStart) {
+            float fadeMultiplier = 1.0f - ((exactAge - fadeStart) / fadeDuration);
+            return this.baseScale * Math.max(0.0f, fadeMultiplier);
+        }
+
+        return this.baseScale;
+    }
+
+    // --- Particle Variables ---
 
     private final float r1, g1, b1, r2, g2, b2;
     private final float orbX, orbY, orbZ;
@@ -27,6 +84,7 @@ public class OmniParticle extends SpriteBillboardParticle {
     private final float rotSpeed;
     private final boolean emissive;
     private final int loopDuration = 16;
+    private final float baseScale; // Tracks initial size for the shrink trick
     protected final SpriteProvider spriteProvider;
 
     protected OmniParticle(ClientWorld world, double x, double y, double z,
@@ -53,6 +111,9 @@ public class OmniParticle extends SpriteBillboardParticle {
             this.scale *= 6.0f;
         }
 
+        // Save the scale after any modifications so we can scale relative to it later
+        this.baseScale = this.scale;
+
         this.gravityStrength = params.gravity();
         this.maxAge = params.lifetime();
         this.alpha = 1.0f;
@@ -77,44 +138,62 @@ public class OmniParticle extends SpriteBillboardParticle {
 
     @Override
     public int getBrightness(float tintMultiplier) {
-        // 15728880 is the magic number for full block light
         return this.emissive ? 15728880 : super.getBrightness(tintMultiplier);
     }
 
     @Override
     public ParticleTextureSheet getType() {
-        return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
+        // Automatically route emissive particles to Additive, and normal/dark particles to Soft Translucent
+        return this.emissive ? PARTICLE_SHEET_ADDITIVE : PARTICLE_SHEET_SOFT_TRANSLUCENT;
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        //Animation loop
+        // Animation loop
         if (!this.dead) {
             this.setSprite(this.spriteProvider.getSprite(this.age % loopDuration, loopDuration));
         }
 
-        //Color
+        // Base Color Interpolation
         float progress = (float)this.age / this.maxAge;
         float cr = MathHelper.lerp(progress, r1, r2);
         float cg = MathHelper.lerp(progress, g1, g2);
         float cb = MathHelper.lerp(progress, b1, b2);
-        this.setColor(cr, cg, cb);
 
-        //Alpha Fadeout
-        //Might change this
-        if (this.age > this.maxAge - (this.maxAge * 0.2f)) {
-            this.alpha = 1.0f - ((float)(this.age - (this.maxAge * 0.2f)) / (this.maxAge * 0.2f));
+        // Calculate a correct 1.0 to 0.0 fade multiplier for the final 20% of life
+        float fadeMultiplier = 1.0f;
+        float fadeStartAge = this.maxAge * 0.8f;
+        float fadeDuration = this.maxAge * 0.2f;
+
+        if (this.age > fadeStartAge) {
+            fadeMultiplier = 1.0f - ((this.age - fadeStartAge) / fadeDuration);
+        }
+        fadeMultiplier = Math.max(0.0f, fadeMultiplier);
+
+        // Apply Blending-Specific Fade Logic
+        if (this.getType() == PARTICLE_SHEET_ADDITIVE) {
+            // Emissive/Additive: Fade RGB to black, keep Alpha safely at 1.0
+            this.setColor(cr * fadeMultiplier, cg * fadeMultiplier, cb * fadeMultiplier);
+            this.alpha = 1.0f;
+        } else {
+            // Dark/Translucent: Keep RGB, clamp Alpha strictly at 11% so it doesn't pop
+            this.setColor(cr, cg, cb);
+            if (fadeMultiplier < 1.0f) {
+                this.alpha = Math.max(0.11f, fadeMultiplier);
+            } else {
+                this.alpha = 1.0f;
+            }
         }
 
-        //Rotation
+        // Rotation
         if (this.rotate) {
             this.prevAngle = this.angle;
             this.angle += this.rotSpeed;
         }
 
-        //Orbital Velocity
+        // Orbital Velocity
         if (orbX != 0 || orbY != 0 || orbZ != 0) {
             Vector3f vel = new Vector3f((float)this.velocityX, (float)this.velocityY, (float)this.velocityZ);
             if (orbX != 0) vel.rotateX(orbX);
