@@ -2,9 +2,9 @@ package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.Stagehand;
-import corablue.stagehand.client.gui.ParticleEmitterScreen;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.block.entity.ParticleEmitterBlockEntity;
+import corablue.stagehand.network.OpenParticleEmitterScreenPacket;
 import corablue.stagehand.world.ModDimensions;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
@@ -26,7 +26,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
-import net.minecraft.client.MinecraftClient;
 import org.jetbrains.annotations.Nullable;
 
 //Particle Emitter is a full GUI workstation for creating particle effects
@@ -92,16 +91,15 @@ public class ParticleEmitterBlock extends BlockWithEntity {
         BlockEntity be = world.getBlockEntity(pos);
 
         if (be instanceof ParticleEmitterBlockEntity emitter) {
-            if (!emitter.isOwner(player)) {
-                if (!world.isClient) {
+            if (!world.isClient) { // SERVER SIDE
+                if (!emitter.isOwner(player)) {
                     player.sendMessage(Text.translatable("ui.stagehand.particle_emitter.not_owner"), true);
+                } else {
+                    // Send S2C Packet containing only the position
+                    corablue.stagehand.network.ModNetwork.CHANNEL.serverHandle(player).send(
+                            new OpenParticleEmitterScreenPacket(pos)
+                    );
                 }
-                return ActionResult.SUCCESS;
-            }
-
-            // Open the GUI on the client side
-            if (world.isClient) {
-                MinecraftClient.getInstance().setScreen(new ParticleEmitterScreen(pos, emitter));
             }
         }
         return ActionResult.SUCCESS;

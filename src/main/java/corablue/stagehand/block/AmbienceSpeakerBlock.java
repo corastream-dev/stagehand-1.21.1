@@ -1,9 +1,9 @@
 package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
+import corablue.stagehand.network.OpenAmbienceSpeakerScreenPacket;
 import org.jetbrains.annotations.Nullable;
 import corablue.stagehand.Stagehand;
-import corablue.stagehand.client.gui.AmbienceSpeakerScreen;
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.world.ModDimensions;
@@ -28,7 +28,6 @@ import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.Direction;
 import net.minecraft.block.Block;
-import net.minecraft.client.MinecraftClient;
 
 //Speaker block plays ambient sounds at configurable range for all players
 //Fun little craftable item to add atmosphere to builds
@@ -87,17 +86,15 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
         BlockEntity be = world.getBlockEntity(pos);
 
         if (be instanceof AmbienceSpeakerBlockEntity speaker) {
-            if (!speaker.isOwner(player)) {
-                if (!world.isClient) {
+            if (!world.isClient) { // SERVER SIDE
+                if (!speaker.isOwner(player)) {
                     player.sendMessage(Text.translatable("ui.stagehand.ambience_speaker.not_owner"), true);
+                } else {
+                    // Send S2C Packet
+                    corablue.stagehand.network.ModNetwork.CHANNEL.serverHandle(player).send(
+                            new OpenAmbienceSpeakerScreenPacket(pos, speaker.getCurrentSound(), speaker.getRange(), speaker.isPlaying(), speaker.getPitch())
+                    );
                 }
-                return ActionResult.SUCCESS;
-            }
-
-            if (world.isClient) {
-                MinecraftClient.getInstance().setScreen(
-                        new AmbienceSpeakerScreen(pos, speaker.getCurrentSound(), speaker.getRange(), speaker.isPlaying(), speaker.getPitch())
-                );
             }
         }
         return ActionResult.SUCCESS;

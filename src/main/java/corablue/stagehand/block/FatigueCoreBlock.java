@@ -1,10 +1,11 @@
 package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
+import corablue.stagehand.network.ModNetwork;
+import corablue.stagehand.network.OpenFatigueCoreScreenPacket;
 import org.jetbrains.annotations.Nullable;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
-import corablue.stagehand.client.gui.FatigueCoreScreen;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -25,7 +26,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
-import net.minecraft.client.MinecraftClient;
 
 //Fatigue Core gives nearby players mining fatigue
 //Mimics the way many popular dungeon mods protect their structures
@@ -79,21 +79,17 @@ public class FatigueCoreBlock extends BlockWithEntity {
         BlockEntity be = world.getBlockEntity(pos);
 
         if (be instanceof FatigueCoreBlockEntity fatigueCore) {
-            if (!fatigueCore.isOwner(player)) {
-                if (!world.isClient) {
+            if (!world.isClient) { // SERVER SIDE
+                if (!fatigueCore.isOwner(player)) {
                     player.sendMessage(Text.translatable("ui.stagehand.fatigue_core.not_owner"), true);
+                } else {
+                    // Send an S2C Packet to the specific player to open the screen
+                    ModNetwork.CHANNEL.serverHandle(player).send(
+                            new OpenFatigueCoreScreenPacket(pos, fatigueCore.getRange(), fatigueCore.doesAffectOwner())
+                    );
                 }
-                return ActionResult.SUCCESS;
-            }
-
-            // Open GUI on the Client Side
-            if (world.isClient) {
-                MinecraftClient.getInstance().setScreen(
-                        new FatigueCoreScreen(pos, fatigueCore.getRange(), fatigueCore.doesAffectOwner())
-                );
             }
         }
-
         return ActionResult.SUCCESS;
     }
 

@@ -3,7 +3,7 @@ package corablue.stagehand;
 import corablue.stagehand.block.ModBlocks;
 import corablue.stagehand.client.gui.LoreAnvilScreen;
 import corablue.stagehand.client.model.ModModelLayers;
-import corablue.stagehand.network.FlashScreenPayload;
+import corablue.stagehand.network.*;
 import corablue.stagehand.particles.ModParticles;
 import corablue.stagehand.screen.ModScreenHandlers;
 import net.fabricmc.api.ClientModInitializer;
@@ -64,6 +64,41 @@ public class StagehandClient implements ClientModInitializer {
                 corablue.stagehand.block.entity.ModBlockEntities.STAGE_PROJECTOR_BE,
                 corablue.stagehand.client.StageProjectorBlockEntityRenderer::new
         );
+
+        // ==========================================
+        //         Screen Packets
+        // ==========================================
+
+        ModNetwork.CHANNEL.registerClientbound(OpenFatigueCoreScreenPacket.class, (message, access) -> {
+            // Safely open the screen here!
+            net.minecraft.client.MinecraftClient.getInstance().setScreen(
+                    new corablue.stagehand.client.gui.FatigueCoreScreen(message.pos(), message.range(), message.affectOwner())
+            );
+        });
+
+        ModNetwork.CHANNEL.registerClientbound(OpenStageConfigScreenPacket.class, (message, access) -> {
+            net.minecraft.client.MinecraftClient.getInstance().setScreen(
+                    new corablue.stagehand.client.gui.StageConfigScreen(message.pos(), message.isOwner(), message.isReady(), message.whitelist())
+            );
+        });
+
+        ModNetwork.CHANNEL.registerClientbound(OpenAmbienceSpeakerScreenPacket.class, (message, access) -> {
+            net.minecraft.client.MinecraftClient.getInstance().setScreen(
+                    new corablue.stagehand.client.gui.AmbienceSpeakerScreen(message.pos(), message.sound(), message.range(), message.isPlaying(), message.pitch())
+            );
+        });
+
+        ModNetwork.CHANNEL.registerClientbound(OpenParticleEmitterScreenPacket.class, (message, access) -> {
+            net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
+
+            // Make sure we have a world before trying to grab the entity
+            if (client.world != null) {
+                net.minecraft.block.entity.BlockEntity be = client.world.getBlockEntity(message.pos());
+                if (be instanceof corablue.stagehand.block.entity.ParticleEmitterBlockEntity emitter) {
+                    client.setScreen(new corablue.stagehand.client.gui.ParticleEmitterScreen(message.pos(), emitter));
+                }
+            }
+        });
 
         // ==========================================
         //         STAGE CHEST RENDERERS

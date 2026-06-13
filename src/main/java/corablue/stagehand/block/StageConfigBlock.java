@@ -2,12 +2,11 @@ package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
-import corablue.stagehand.client.gui.StageConfigScreen;
+import corablue.stagehand.network.OpenStageConfigScreenPacket;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -38,17 +37,17 @@ public class StageConfigBlock extends BlockWithEntity {
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof StageConfigBlockEntity config) {
 
-            // Allow both Owner and Builders to open it
-            if (!config.isBuilder(player)) {
-                if (!world.isClient) player.sendMessage(Text.translatable("ui.stagehand.stage_config.no_auth"), true);
-                return ActionResult.SUCCESS;
-            }
-
-            if (world.isClient) {
-                boolean isOwner = config.isOwner(player);
-                MinecraftClient.getInstance().setScreen(
-                        new StageConfigScreen(pos, isOwner, config.isStageReady(), config.getBuilderWhitelist())
-                );
+            if (!world.isClient) { // SERVER SIDE
+                // Allow both Owner and Builders to open it
+                if (!config.isBuilder(player)) {
+                    player.sendMessage(Text.translatable("ui.stagehand.stage_config.no_auth"), true);
+                } else {
+                    boolean isOwner = config.isOwner(player);
+                    // Send S2C Packet
+                    corablue.stagehand.network.ModNetwork.CHANNEL.serverHandle(player).send(
+                            new OpenStageConfigScreenPacket(pos, isOwner, config.isStageReady(), config.getBuilderWhitelist())
+                    );
+                }
             }
         }
         return ActionResult.SUCCESS;
