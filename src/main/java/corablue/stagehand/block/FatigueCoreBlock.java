@@ -1,8 +1,6 @@
 package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
-import corablue.stagehand.network.ModNetwork;
-import corablue.stagehand.network.OpenFatigueCoreScreenPacket;
 import org.jetbrains.annotations.Nullable;
 import corablue.stagehand.block.entity.FatigueCoreBlockEntity;
 import corablue.stagehand.block.entity.ModBlockEntities;
@@ -84,8 +82,9 @@ public class FatigueCoreBlock extends BlockWithEntity {
                     player.sendMessage(Text.translatable("ui.stagehand.fatigue_core.not_owner"), true);
                 } else {
                     // Send an S2C Packet to the specific player to open the screen
-                    ModNetwork.CHANNEL.serverHandle(player).send(
-                            new OpenFatigueCoreScreenPacket(pos, fatigueCore.getRange(), fatigueCore.doesAffectOwner())
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+                            (net.minecraft.server.network.ServerPlayerEntity) player,
+                            new corablue.stagehand.network.OpenFatigueCoreScreenPayload(pos, fatigueCore.getRange(), fatigueCore.doesAffectOwner())
                     );
                 }
             }

@@ -2,7 +2,6 @@ package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
 import corablue.stagehand.block.entity.StageConfigBlockEntity;
-import corablue.stagehand.network.OpenStageConfigScreenPacket;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -43,9 +42,11 @@ public class StageConfigBlock extends BlockWithEntity {
                     player.sendMessage(Text.translatable("ui.stagehand.stage_config.no_auth"), true);
                 } else {
                     boolean isOwner = config.isOwner(player);
-                    // Send S2C Packet
-                    corablue.stagehand.network.ModNetwork.CHANNEL.serverHandle(player).send(
-                            new OpenStageConfigScreenPacket(pos, isOwner, config.isStageReady(), config.getBuilderWhitelist())
+
+                    // Send standard Fabric CustomPayload
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+                            (net.minecraft.server.network.ServerPlayerEntity) player,
+                            new corablue.stagehand.network.OpenStageConfigScreenPayload(pos, isOwner, config.isStageReady(), config.getBuilderWhitelist())
                     );
                 }
             }

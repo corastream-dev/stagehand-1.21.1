@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import corablue.stagehand.Stagehand;
 import corablue.stagehand.block.entity.ModBlockEntities;
 import corablue.stagehand.block.entity.ParticleEmitterBlockEntity;
-import corablue.stagehand.network.OpenParticleEmitterScreenPacket;
 import corablue.stagehand.world.ModDimensions;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
@@ -95,9 +94,11 @@ public class ParticleEmitterBlock extends BlockWithEntity {
                 if (!emitter.isOwner(player)) {
                     player.sendMessage(Text.translatable("ui.stagehand.particle_emitter.not_owner"), true);
                 } else {
-                    // Send S2C Packet containing only the position
-                    corablue.stagehand.network.ModNetwork.CHANNEL.serverHandle(player).send(
-                            new OpenParticleEmitterScreenPacket(pos)
+
+                    // Send standard Fabric CustomPayload containing only the position
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+                            (net.minecraft.server.network.ServerPlayerEntity) player,
+                            new corablue.stagehand.network.OpenParticleEmitterScreenPayload(pos)
                     );
                 }
             }

@@ -51,8 +51,15 @@ public class ModNetwork {
             }
         });
 
-        //Teleport flash
+// Teleport flash
         net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(corablue.stagehand.network.FlashScreenPayload.ID, corablue.stagehand.network.FlashScreenPayload.CODEC);
+
+// Register standard UI S2C Payloads
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(OpenFatigueCoreScreenPayload.ID, OpenFatigueCoreScreenPayload.CODEC);
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(OpenStageConfigScreenPayload.ID, OpenStageConfigScreenPayload.CODEC);
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(OpenAmbienceSpeakerScreenPayload.ID, OpenAmbienceSpeakerScreenPayload.CODEC);
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(OpenParticleEmitterScreenPayload.ID, OpenParticleEmitterScreenPayload.CODEC);
+
 
         //Fatigue Core Packet
         CHANNEL.registerServerbound(FatigueCoreUpdatePacket.class, (message, access) -> {

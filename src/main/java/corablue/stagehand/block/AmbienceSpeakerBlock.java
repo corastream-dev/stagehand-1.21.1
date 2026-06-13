@@ -1,7 +1,6 @@
 package corablue.stagehand.block;
 
 import com.mojang.serialization.MapCodec;
-import corablue.stagehand.network.OpenAmbienceSpeakerScreenPacket;
 import org.jetbrains.annotations.Nullable;
 import corablue.stagehand.Stagehand;
 import corablue.stagehand.block.entity.AmbienceSpeakerBlockEntity;
@@ -90,9 +89,11 @@ public class AmbienceSpeakerBlock extends BlockWithEntity {
                 if (!speaker.isOwner(player)) {
                     player.sendMessage(Text.translatable("ui.stagehand.ambience_speaker.not_owner"), true);
                 } else {
-                    // Send S2C Packet
-                    corablue.stagehand.network.ModNetwork.CHANNEL.serverHandle(player).send(
-                            new OpenAmbienceSpeakerScreenPacket(pos, speaker.getCurrentSound(), speaker.getRange(), speaker.isPlaying(), speaker.getPitch())
+
+                    // Send standard Fabric CustomPayload
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+                            (net.minecraft.server.network.ServerPlayerEntity) player,
+                            new corablue.stagehand.network.OpenAmbienceSpeakerScreenPayload(pos, speaker.getCurrentSound(), speaker.getRange(), speaker.isPlaying(), speaker.getPitch())
                     );
                 }
             }

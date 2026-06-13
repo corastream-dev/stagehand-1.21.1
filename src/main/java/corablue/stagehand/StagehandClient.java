@@ -55,6 +55,7 @@ public class StagehandClient implements ClientModInitializer {
 
         //Lore Anvil screen
         HandledScreens.register(ModScreenHandlers.LORE_ANVIL, LoreAnvilScreen::new);
+        HandledScreens.register(ModScreenHandlers.STAGE_CHEST, corablue.stagehand.client.gui.StageChestScreen::new);
 
         //Register model layers
         ModModelLayers.registerModelLayers();
@@ -69,35 +70,38 @@ public class StagehandClient implements ClientModInitializer {
         //         Screen Packets
         // ==========================================
 
-        ModNetwork.CHANNEL.registerClientbound(OpenFatigueCoreScreenPacket.class, (message, access) -> {
-            // Safely open the screen here!
-            net.minecraft.client.MinecraftClient.getInstance().setScreen(
-                    new corablue.stagehand.client.gui.FatigueCoreScreen(message.pos(), message.range(), message.affectOwner())
-            );
+        // Fatigue Core
+        ClientPlayNetworking.registerGlobalReceiver(corablue.stagehand.network.OpenFatigueCoreScreenPayload.ID, (payload, context) -> {
+            context.client().execute(() -> {
+                context.client().setScreen(new corablue.stagehand.client.gui.FatigueCoreScreen(payload.pos(), payload.range(), payload.affectOwner()));
+            });
         });
 
-        ModNetwork.CHANNEL.registerClientbound(OpenStageConfigScreenPacket.class, (message, access) -> {
-            net.minecraft.client.MinecraftClient.getInstance().setScreen(
-                    new corablue.stagehand.client.gui.StageConfigScreen(message.pos(), message.isOwner(), message.isReady(), message.whitelist())
-            );
+        // Stage Config
+        ClientPlayNetworking.registerGlobalReceiver(corablue.stagehand.network.OpenStageConfigScreenPayload.ID, (payload, context) -> {
+            context.client().execute(() -> {
+                context.client().setScreen(new corablue.stagehand.client.gui.StageConfigScreen(payload.pos(), payload.isOwner(), payload.isReady(), payload.whitelist()));
+            });
         });
 
-        ModNetwork.CHANNEL.registerClientbound(OpenAmbienceSpeakerScreenPacket.class, (message, access) -> {
-            net.minecraft.client.MinecraftClient.getInstance().setScreen(
-                    new corablue.stagehand.client.gui.AmbienceSpeakerScreen(message.pos(), message.sound(), message.range(), message.isPlaying(), message.pitch())
-            );
+        // Ambience Speaker
+        ClientPlayNetworking.registerGlobalReceiver(corablue.stagehand.network.OpenAmbienceSpeakerScreenPayload.ID, (payload, context) -> {
+            context.client().execute(() -> {
+                context.client().setScreen(new corablue.stagehand.client.gui.AmbienceSpeakerScreen(payload.pos(), payload.sound(), payload.range(), payload.isPlaying(), payload.pitch()));
+            });
         });
 
-        ModNetwork.CHANNEL.registerClientbound(OpenParticleEmitterScreenPacket.class, (message, access) -> {
-            net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
-
-            // Make sure we have a world before trying to grab the entity
-            if (client.world != null) {
-                net.minecraft.block.entity.BlockEntity be = client.world.getBlockEntity(message.pos());
-                if (be instanceof corablue.stagehand.block.entity.ParticleEmitterBlockEntity emitter) {
-                    client.setScreen(new corablue.stagehand.client.gui.ParticleEmitterScreen(message.pos(), emitter));
+        // Particle Emitter
+        ClientPlayNetworking.registerGlobalReceiver(corablue.stagehand.network.OpenParticleEmitterScreenPayload.ID, (payload, context) -> {
+            context.client().execute(() -> {
+                net.minecraft.client.MinecraftClient client = context.client();
+                if (client.world != null) {
+                    net.minecraft.block.entity.BlockEntity be = client.world.getBlockEntity(payload.pos());
+                    if (be instanceof corablue.stagehand.block.entity.ParticleEmitterBlockEntity emitter) {
+                        client.setScreen(new corablue.stagehand.client.gui.ParticleEmitterScreen(payload.pos(), emitter));
+                    }
                 }
-            }
+            });
         });
 
         // ==========================================
