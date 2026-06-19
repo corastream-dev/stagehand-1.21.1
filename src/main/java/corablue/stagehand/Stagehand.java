@@ -44,6 +44,13 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import corablue.stagehand.block.entity.StageConfigBlockEntity;
+import net.minecraft.world.GameMode;
+
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+
 public class Stagehand implements ModInitializer {
 
 	public static net.minecraft.server.MinecraftServer SERVER;
@@ -95,9 +102,15 @@ public class Stagehand implements ModInitializer {
 		ProxyEvents.register();
 
 		//Admin can now set Stages as worldspawns!
-		//Detect new players and...
+
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.getPlayer();
+
+			// NEW: Catch players logging in while already inside the dimension
+			if (player.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
+				enforceStagePermissions(player);
+			}
+
 			StageManager manager = StageManager.getServerState(server);
 
 			String defaultHub = CONFIG.DefaultHubStage();
@@ -131,8 +144,22 @@ public class Stagehand implements ModInitializer {
 			}
 		});
 
-		// Tick Event to process the delayed teleports
+		// Tick Event to process delayed teleports and enforce Stage permissions
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
+
+			// --- NEW: Enforce Permissions twice a second (every 10 ticks) ---
+			// By checking server ticks, we avoid heavy processing every single tick.
+			if (server.getTicks() % 40 == 0) {
+				ServerWorld stageWorld = server.getWorld(ModDimensions.THE_STAGE);
+				// Only bother running the logic if the dimension exists and has players in it
+				if (stageWorld != null && !stageWorld.getPlayers().isEmpty()) {
+					for (ServerPlayerEntity player : stageWorld.getPlayers()) {
+						enforceStagePermissions(player);
+					}
+				}
+			}
+
+			// --- EXISTING: Process delayed hub teleports ---
 			if (!pendingHubTeleports.isEmpty()) {
 				Iterator<Map.Entry<UUID, Integer>> it = pendingHubTeleports.entrySet().iterator();
 				while (it.hasNext()) {
@@ -162,6 +189,13 @@ public class Stagehand implements ModInitializer {
 
 		//Return new players to hub on death if they have no spawn point yet
 		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+
+			// NEW: Catch players respawning into beds set inside the dimension
+			if (newPlayer.getWorld().getRegistryKey().equals(ModDimensions.THE_STAGE)) {
+				enforceStagePermissions(newPlayer);
+			}
+
+			// Return new players to hub on death if they have no spawn point yet
 			if (!alive && newPlayer.getSpawnPointPosition() == null) {
 				StageManager manager = StageManager.getServerState(newPlayer.getServer());
 				if (manager.getHubPos() != null) {
@@ -248,5 +282,49 @@ public class Stagehand implements ModInitializer {
 						return 1;
 					}));
 		});
+	}
+
+	// Helper method to enforce permissions based on the 2000x2000 stage grid
+	private static void enforceStagePermissions(ServerPlayerEntity player) {
+		// 1. Admins bypass all restrictions (Make sure you are de-opped when testing!)
+		if (player.hasPermissionLevel(2)) return;
+
+		BlockPos playerPos = player.getBlockPos();
+
+		// 2. Calculate the center of the current 2000x2000 stage cell.
+		int centerX = (int) (Math.floor((playerPos.getX() + 1000.0) / 2000.0) * 2000);
+		int centerZ = (int) (Math.floor((playerPos.getZ() + 1000.0) / 2000.0) * 2000);
+		BlockPos centerPos = new BlockPos(centerX, 64, centerZ);
+
+		ServerWorld world = player.getServerWorld();
+
+		// 3. ONLY check if the chunk is already loaded. (Prevents major server lag spikes!)
+		if (world.isChunkLoaded(centerPos)) {
+			net.minecraft.block.entity.BlockEntity be = world.getBlockEntity(centerPos);
+
+			if (be instanceof corablue.stagehand.block.entity.StageConfigBlockEntity configBlock) {
+				// Check the internal isBuilder method
+				if (!configBlock.isBuilder(player)) {
+					// Check mode first to prevent sending redundant packets to the client
+					if (player.interactionManager.getGameMode() != GameMode.ADVENTURE) {
+						player.changeGameMode(GameMode.ADVENTURE);
+					}
+				} else {
+					if (player.interactionManager.getGameMode() == GameMode.ADVENTURE) {
+						player.changeGameMode(GameMode.SURVIVAL);
+					}
+				}
+			} else {
+				// Fallback: Chunk is loaded, but no config block exists
+				if (player.interactionManager.getGameMode() != GameMode.ADVENTURE) {
+					player.changeGameMode(GameMode.ADVENTURE);
+				}
+			}
+		} else {
+			// Fallback: Teleported into an ungenerated chunk or the void
+			if (player.interactionManager.getGameMode() != GameMode.ADVENTURE) {
+				player.changeGameMode(GameMode.ADVENTURE);
+			}
+		}
 	}
 }

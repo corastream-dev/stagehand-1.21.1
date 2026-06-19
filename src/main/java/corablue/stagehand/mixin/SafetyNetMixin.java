@@ -6,6 +6,8 @@ import corablue.stagehand.world.StageManager;
 import corablue.stagehand.world.StageReturnHandler;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,9 +28,11 @@ public abstract class SafetyNetMixin {
                 // Trigger the achievement
                 corablue.stagehand.advancement.ModCriteria.STAGE_DEATH.trigger(player);
 
-                // Immediately restore health to prevent vanilla death logic from continuing
+                // --- COMPLETELY RESET PLAYER STATE ---
+                // Restore Health
                 player.setHealth(player.getMaxHealth());
                 player.clearStatusEffects();
+                player.setFireTicks(0);
 
                 // Schedule the teleport for the next tick to avoid recursion/crash
                 player.getServer().execute(() -> {
@@ -45,7 +49,19 @@ public abstract class SafetyNetMixin {
                     }
 
                     // Execute the single, clean teleport
+                    player.setHealth(player.getMaxHealth());
+                    player.clearStatusEffects();
+                    player.getHungerManager().setFoodLevel(20);
+                    player.getHungerManager().setSaturationLevel(5.0f);
+                    player.setFireTicks(0);
+                    player.setAir(player.getMaxAir());
+                    player.fallDistance = 0.0f;
                     StageReturnHandler.returnPlayer(player, mode);
+
+                });
+
+                player.getServer().execute(() -> {
+                    player.setFireTicks(0);
                 });
 
                 // Cancel the vanilla death event
